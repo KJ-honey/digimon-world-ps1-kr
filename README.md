@@ -140,17 +140,22 @@ python3 -m venv .venv
 ## 한글 2,350자 확장
 
 기존 한글 912자는 모두 KS X 1001의 2,350자에 포함됩니다. 추가 1,438자를 공급하고,
-기존 991개 글자·기호 슬롯과 대체 글꼴의 코드/픽셀을 보존하는 확장 빌드를 구현했습니다.
+기존 문자 코드를 보존하는 확장 빌드를 구현했습니다. 2026-09-28 사용자 선택에 따라
+기본 한글 폰트는 **Mona12 Text KR, 12px**입니다. 기존 한글 913칸과 추가 1,438칸을
+같은 폰트로 생성하며 기호 78칸과 대체 글꼴은 원래 픽셀을 보존합니다.
 반복 행 묶음을 공유하여 기존 폰트 영역에 넣으므로 ISO 크기와 상주 RAM은 늘지 않습니다.
 
 ```sh
 python3 -m pip install -r requirements-font.txt
 # LLVM 23.1.2 llvm-mc/llvm-objcopy 필요 (PATH 또는 LLVM_BIN)
+# 사용자 제공 Mona12TextKR.ttf를 work/font-compare/에 배치 (해시는 아래 문서 참조)
 python3 tools/dg_build.py --expand-font --alignment-repair --output work/build/font-my-build
 python3 tools/font_cpu_verify.py work/build/font-my-build
 ```
 
 `--edits`를 함께 지정하면 확장 문자표로 기존 DG 재삽입을 수행합니다.
 [폰트 형식·빌드·검증 범위](docs/font-expansion.md)를 참고하세요.
+굴림 원본은 기존 문자표의 정체성 검증에 계속 필요합니다. Mona12 파일은 별도 빌드 입력이며
+다른 버전/파일이면 빌드를 중단합니다. 폰트 파일은 Git에 포함하지 않습니다.
 조합형 이름 입력은 현재의 KS X 1001 2,350자를 대상으로 구현합니다.
 사용자 결정에 따라 현대 한글 11,172자 전체 지원은 필요하지 않으며 완료 조건에 포함하지 않습니다.

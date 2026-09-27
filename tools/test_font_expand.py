@@ -1,5 +1,6 @@
 import unittest
-from font_expand import pack, unpack, extra_code, ks_syllables
+from font_expand import pack, unpack, extra_code, ks_syllables, checked_rows
+from PIL import ImageFont
 
 class FontPackingTests(unittest.TestCase):
     def test_preserves_pixels_and_unused_low_nibble(self):
@@ -21,5 +22,15 @@ class FontPackingTests(unittest.TestCase):
         chars=ks_syllables()
         self.assertEqual(len(chars),2350)
         self.assertTrue({'가','힝','뼈','팬','늪'}<=chars)
+
+    def test_raster_rejects_empty_and_clipped_ink(self):
+        small = ImageFont.load_default(size=10)
+        rows = checked_rows(small, 'A')
+        self.assertEqual(len(rows), 11)
+        self.assertTrue(any(row != 65535 for row in rows))
+        with self.assertRaisesRegex(ValueError, 'Empty glyph'):
+            checked_rows(small, ' ')
+        with self.assertRaisesRegex(ValueError, 'Clipped glyph'):
+            checked_rows(ImageFont.load_default(size=40), 'A')
 
 if __name__=='__main__':unittest.main()

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Lossless 3/4/4-row dictionary font provider in the original EXE font slot.
 
-The legacy code table and all 992 bitmaps (including fallback) retain identity.
+The legacy code table, symbols and fallback retain identity. Hangul uses the
+user-selected Mona12 Text KR profile for both legacy and added syllables.
 New KS X 1001 syllables use F040..F7FC, trail 7F excluded. Development profile;
 this is not a claim of complete text-population or name-entry coverage.
 """
-import json
 import os
 from pathlib import Path
 import shutil
@@ -14,7 +14,7 @@ import subprocess
 
 from PIL import Image, ImageDraw, ImageFont, __version__ as PIL_VERSION
 from capstone import Cs, CS_ARCH_MIPS, CS_MODE_MIPS32, CS_MODE_LITTLE_ENDIAN
-from match_gulim import DEFAULT_FONT, render_rows
+from match_gulim import render_rows
 from survey import ROOT, sha, write_json
 
 START, END = 0x98D38, 0x9E278
@@ -26,6 +26,21 @@ CODE_BYTES = 512
 SCRATCH_OFFSET = CODE_BYTES
 DESCRIPTORS_OFFSET = SCRATCH_OFFSET + 24
 INDEX_OFFSET = DESCRIPTORS_OFFSET + 60
+FONT_PROFILE = 'ksx1001-mona12-v1'
+DEFAULT_FONT = ROOT / 'work/font-compare/Mona12TextKR.ttf'
+FONT_SHA256 = 'ce94906004a3280d658946c8816093895897792363973ede9498d746b7155336'
+
+
+def checked_rows(bitmap, char):
+    """Reject empty/cropped glyphs before serializing the fixed 12x11 cell."""
+    canvas = Image.new('1', (40, 40))
+    ImageDraw.Draw(canvas).text((8, 8), char, font=bitmap, fill=1, anchor='lt')
+    bounds = canvas.getbbox()
+    if not bounds:
+        raise ValueError(f'Empty glyph: {char}')
+    if bounds[0] < 8 or bounds[1] < 8 or bounds[2] > 20 or bounds[3] > 19:
+        raise ValueError(f'Clipped glyph: {char}: {bounds}')
+    return render_rows(bitmap, char)
 
 
 def ks_syllables():
@@ -167,6 +182,8 @@ def compile_font(exe, mapping, output, font_path=DEFAULT_FONT):
     old = {e['character'] for e in entries if e['character'] and '가' <= e['character'] <= '힣'}
     required = old | ks_syllables()
     additions = sorted(required-old)
+    if sha(font_path.read_bytes()) != FONT_SHA256:
+        raise ValueError('Mona12 font source changed; review a new profile first')
     from fontTools.ttLib import TTFont
     with TTFont(font_path, fontNumber=0) as source_font:
         cmap = source_font.getBestCmap()
@@ -174,25 +191,18 @@ def compile_font(exe, mapping, output, font_path=DEFAULT_FONT):
         if missing:
             raise ValueError('Font has no glyphs: '+''.join(missing))
     bitmap = ImageFont.truetype(str(font_path), 12, index=0)
-    # Matches restore_text's independently bound input hash and raster profile.
-    matches = json.loads((ROOT/'work/review/glyph-matches.json').read_text())
-    if sha(font_path.read_bytes()) != matches['font_sha256']:
-        raise ValueError('Font source changed; review a new profile first')
+    # Glyph identities still come from restore_text's Gulim comparison. The
+    # selected product raster is independently bound to the Mona12 source.
+    rendered = {char: checked_rows(bitmap, char) for char in sorted(required)}
     rows = [struct.unpack_from('<11H', exe, START+22*i) for i in range(992)]
+    legacy_hangul = [e for e in entries if e['character'] in old]
+    for e in legacy_hangul:
+        rows[e['index']] = rendered[e['character']]
     new_entries = []
     for i, char in enumerate(additions):
-        glyph = render_rows(bitmap, char)
-        if all(r == 0xFFFF for r in glyph):
-            raise ValueError(f'Empty glyph: {char}')
-        # Embedded strike must cover the cell without cropped ink.
-        canvas = Image.new('1', (32,32))
-        ImageDraw.Draw(canvas).text((0,0), char, font=bitmap, fill=1, anchor='lt')
-        bounds = canvas.getbbox()
-        if not bounds or bounds[2]>12 or bounds[3]>11:
-            raise ValueError(f'Clipped glyph: {char}: {bounds}')
-        rows.append(glyph)
+        rows.append(rendered[char])
         new_entries.append({'id': f'expanded-{ord(char):04x}', 'index': 992+i,
-                            'code': extra_code(i), 'character': char, 'evidence': 'gulim_12px_raster'})
+                            'code': extra_code(i), 'character': char, 'evidence': 'mona12_12px_raster'})
     idx, tables, desc = pack(rows)
     for i, original in enumerate(rows):
         if unpack(idx,tables,desc,i) != tuple(original):
@@ -242,11 +252,14 @@ def compile_font(exe, mapping, output, font_path=DEFAULT_FONT):
     (output/'provider.asm').write_text('\n'.join(f'{i.address:08x} {i.mnemonic} {i.op_str}' for i in ins)+'\n')
     if len({e['code'] for e in entries+new_entries}) != len(entries+new_entries):
         raise ValueError('New code collides with legacy identity')
-    result_map = dict(mapping, entries=entries+new_entries, font_profile='ksx1001-preserve-legacy-v1')
+    result_map = dict(mapping, entries=entries+new_entries, font_profile=FONT_PROFILE)
     write_json(output/'character-map.json', result_map)
-    report = {'profile':'ksx1001-preserve-legacy-v1', 'hangul_before':len(old),
+    report = {'profile':FONT_PROFILE, 'hangul_before':len(old),
               'hangul_total':len(required), 'hangul_added':len(additions),
-              'legacy_slots_preserved':991, 'fallback_preserved':True,
+              'legacy_slots_preserved':991-len(legacy_hangul), 'fallback_preserved':True,
+              'legacy_hangul_slots_rerendered':len(legacy_hangul),
+              'font_name':'Mona12 Text KR', 'font_size_px':12, 'font_face':0,
+              'raster':'Pillow 1-bit, anchor=lt, origin=(0,0), 12x11',
               'glyphs_total_with_fallback':len(rows), 'glyph_bytes':len(packed), 'capacity':END-START,
               'provider_code_bytes':len(code), 'scratch_bytes':22, 'extra_resident_ram':0,
               'font_sha256':sha(font_path.read_bytes()), 'pillow_version':PIL_VERSION,
