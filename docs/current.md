@@ -1,6 +1,6 @@
 # 현재 상태
 
-기준일: 2026-09-28. 기록 ID: `recovery-001`, 후속 `dg-boundaries-001`, `dg-runtime-001`, `font-expand-001`, `translation-review-001`.
+기준일: 2026-09-28. 기록 ID: `recovery-001`, 후속 `dg-boundaries-001`, `dg-runtime-001`, `font-expand-001`, `translation-review-001`, `dg-expand-001`.
 
 ## 사용자 목표와 완료 조건
 
@@ -208,10 +208,11 @@ DG 논리 `[0x800, 0x6236)`과 MAPHEAD `[0, 0x5A36)`은 두 판 각각 완전히
 manifest로 왕복해 넣은 ISO도 기존 한국어 ISO 전체 해시와 일치했다.
 증거: `work/dg/analysis/summary.json`, `work/build/dg-all-unchanged/build.json`.
 
-현재 재삽입 정책은 길이·제어 위치 보존이다. 없는 글자, 모호한 중복, 제어/인자 변경·이동,
+기존 `dg_build.py`의 재삽입 정책은 길이·제어 위치 보존이다. 없는 글자, 모호한 중복, 제어/인자 변경·이동,
 미확정 글리프 변경, 길이 차이, 중복 writer, 원본 불일치를 오류로 처리한다.
 자동 공백 추가·축약·누락은 없다. 전체 참조 및 버퍼 예산이 미확정이므로 relocation은
 지원하지 않으며 이는 사용자 번역 표현을 제한하기로 한 결정이 아니다.
+후속 `dg_expand.py`의 별도 대사 bank는 아래와 같이 원문 길이 제한을 해제한다.
 원본 ISO에서 쓰기를 계획하고 DG/MAPHEAD/선택적 정렬 수정과 EDC/P/Q만 갱신한다.
 최종 전체 sector diff, 파일시스템 불변, DG/MAPHEAD 재추출 및 명령 구조를 검사한다.
 
@@ -254,6 +255,57 @@ DG 논리 payload `0x64C24`의 종료쌍 포함 28 bytes는 일본어판·기존
 동일하다. 일본어 `肉を３つ手に入れた！`가 번역되지 않은 채 한국어 글꼴로 표시되는 경로다.
 이전 QA ISO와 그 ISO의 세이브에서도 같은 문제를 재현했다. 이번 재삽입으로 생긴 손상이
 아니며 번역 미해결 항목으로 남긴다. 사용자가 충분하다고 판단하여 추가 실행 검증은 중단했다.
+
+### 대사 바이트 확장 (`dg-expand-001`)
+
+2026-09-28, 번역 중인 메인 워크트리와 분리하여 `tools/dg_expand.py`,
+`dg_bank.s`, `dg_bank_verify.py`, `dg_expand_audit.py`를 추가했다.
+기존 manifest의 원문 ID/hash를 유지하면서 원문보다 긴/짧은 번역을 넣는다.
+번역 문장 자동 변경은 없으며 아래 이미지는 합성 QA다. 기술·명령·한계는
+[dialogue-expansion.md](dialogue-expansion.md)에 기록했다.
+
+일반 script 버퍼는 RAM `80161784..80163783`의 8 KiB이고 바로 뒤가 VM 상태다.
+단순 파일 확대/명령 이동은 채택하지 않았다. 원문 payload 첫 4 bytes에 bank descriptor를
+넣고, `800F4200` wrapper가 별도 대사를 읽어 원본 소비자에 전달한 뒤 원래 continuation으로
+되돌린다. 다음 opcode의 `1A` 여부 검사도 유지한다. 모든 script-relative 명령·분기·섹션·
+선택지 offset은 보존하며, script 0 descriptor는 MAPHEAD와 DG 양쪽에 쓴다.
+
+DG 초기 directory read의 8 KiB 중 원래 script 0을 중복 로드하던 영역에 helper와
+2 KiB scratch를 배치한다. DG의 script 파일 offset만 일률 `+0x1800` 이동하며 RAM
+배치는 그대로다. 대사당 한 sector의 bank를 붙이고 DG 전체를 raw track 뒤에 append한다.
+ISO9660 DG extent/size와 PVD volume size 양쪽 endian을 갱신한다. 다른 파일의 위치와
+기존 DG extent는 보존한다. 원본 대사 길이 대신 인코딩·제어 순서·64-byte 출력 행 경계를
+검사한다. 기존 줄 수를 보존하며 자동 줄바꿈/페이지 추가는 아직 없다.
+
+확인된 4,617 단위에 시험 공백 2 bytes를 추가하는 감사에서 **4,592개**가 통과했다.
+25개는 `07/08/09/11/12`(hex) 동적 table 삽입의 최악 출력 길이가 미확정이라 변경 시
+거부한다. `05/06` 이름은 최대 6글자, 숫자는 원본 digit loop를 예산으로 사용한다.
+4,592개 모두 설치된 wrapper의 CPU 실행에서 긴 원문 소비자 대조와 출력/반환 폭이 같고,
+원래 continuation·callee-saved 상태·scratch guard가 보존됐다. **CD I/O와 BIOS 문자열
+서비스는 명시적 stub**이므로 이 결과를 실제 장면·streaming 검증으로 계산하지 않는다.
+연속 `1A` 대사 606개를 포함해 원래 다음 opcode에 따른 textbox 상태도 대조했다.
+증거: `work/build/expanded-stress/bank/cpu-verification.json`.
+
+`work/build/expanded-qa-02/dg-expanded.cue`의 SHA-256은
+`ba238d1f6e18a46b5e25cc187df1867c3d06e0847ecbeb5350912a63fc0e5d23`다.
+Mednafen 1.32.1 / emucap df23142에서 콜드 부팅한 뒤 다음을 확인했다.
+
+- 첫 할배몬 `0059c0`: terminator 포함 **114→126 bytes**, 추가 시험 문자열 표시,
+  다음 질문·선택지·두 이름 입력/재표시·마을 도입부 진행. MAPHEAD 23,094 bytes 일치.
+- 일반 map script 149의 씨앗몬 `064958`: **40→42 bytes**, `고기`→`고기를` 표시,
+  다음 설명 진행. 새 DG script 6,144 bytes와 bank record가 RAM/디스크 일치.
+  helper 복귀의 exec 이벤트에서 원래 continuation `80162106` 확인, event drop 0.
+- helper 2,048 bytes도 RAM/디스크 일치. 직접 RAM/코드 쓰기와 다른 이미지의 state 로드는 없다.
+
+실행 증거는 `work/dg/expansion-runtime/verification.json`과 같은 디렉터리의 화면/메모리/state다.
+첫 화면에서 나중에 덤프한 VM PC는 이미 초기화되어 0이었으므로 그 값을 순간 종료 증거로
+사용하지 않았다. 씨앗몬 복귀 이벤트와 CPU 종료 검증을 별도로 남겼다.
+
+`--expand-font` 동시 빌드도 sector writer 충돌 없이 통과했다. 합성 결합 이미지
+`work/build/expanded-font-qa/`는 대사 CPU 검증 및 2,430칸 폰트/4bpp 전수 CPU 검증을
+통과했지만 그 결합 이미지의 실제 화면 검증은 아직 없다. 변경 대사마다 동기 CD 읽기가
+추가되므로 전체 streaming/native/전투 회귀와 체감 지연, 미확정 25개, 저장/재로드는 남는다.
+원문 길이 제한을 해제한 개발 기능이며 전체 대사 추출 완료나 배포 완료 주장이 아니다.
 
 ### 한글 2,350자 확장 (`font-expand-001`)
 
@@ -419,7 +471,7 @@ s2는 함수 종료 시 복원된다. a0의 결과는 기존 16-bit 값과 같�
 | FONT-01 | 누락의 실제 원인과 전체 문자 수요 | 모든 문자열 소비자 열거, 미번역/잘못된 대체 코드 검사, 런타임 누락 재현 | 빈 글꼴 추가만으로 해결한다고 가정하지 않음 |
 | FONT-02 | 요청한 2,350자 공급은 기존 RAM 영역 내 구현·전수 CPU 및 실제 새 글자 화면 검증 완료 | 추가 1,438자·기존 모든 슬롯 보존; 2,350자 조합 입력 연결 및 다른 소비자 회귀 | 3/4/4행 사전 압축, 기존 변환/GPU 경로 유지; 11,172자 확장 불필요 |
 | NAME-01 | 조합 상태부터 저장 이후 소비까지 | 이름 확정 writer, 동적 삽입 reader, save/reload 경로 추적 | 일관된 문자 ID와 검증 가능한 저장 형태 먼저 확정 |
-| TEXT-01 | 남은 스크립트 참조와 공간 확대 | 소비자 기반 4,617 단위·225 영역 왕복·길이 유지 재삽입 완료; MAPHEAD/DG 각 1개 실제 화면·종료·후속 진행 확인; 6B 4개 경로와 미참조/native 호출자 및 나머지 장면은 남음 | 전체 참조/버퍼 조사 후 길이 변경·relocation 설계 |
+| TEXT-01 | 남은 스크립트 참조와 공간 확대 | 별도 bank로 원문 길이 제한 해제; 4,592개 길이 증가 CPU 검증, MAPHEAD/DG 각 1개 실제 확장 표시·후속 진행 확인 | 동적 table 예산 미확정 25개, 6B 4개 경로, CD streaming/native/전투 회귀 및 표시 폭 검증 |
 | TEXT-02 | Unicode 복원의 문맥 검증 | 한글 913칸/912자 연결 및 후보 payload 왕복 완료; 특수 17칸과 실제 소비 문맥 확인 | 검수 문자표 사용, 중복 코드·미확정 기호는 raw token으로 보존 |
 | DISC-01 | 새 쓰기의 sector 무결성 | 변경 sector별 Form 1/2 EDC/ECC 검사 및 생성 | 변경하지 않은 sector는 그대로 보존 |
 
