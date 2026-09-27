@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Reinsert verified DG text into an immutable Korean disc (development only).
 
+Optional --expand-font installs the lossless KS X 1001 provider.
 No relocation or implicit padding: each text payload has exactly its old size;
 every control/argument/terminator and unresolved glyph keeps its byte position.
 Script 0 writes are mirrored into the actual MAPHEAD loading source.
@@ -107,26 +108,38 @@ def sector_plan(disc, table, writes):
     return plan
 
 
-def build(edits_path, output, alignment=False):
+def build(edits_path, output, alignment=False, expand_font=False):
     if not output.resolve().is_relative_to((ROOT/'work').resolve()) or output.exists():
         raise ValueError('Choose a new output directory under work/')
-    manifest = json.loads(edits_path.read_text())
+    if edits_path is None and not expand_font:
+        raise ValueError('--edits or --expand-font required')
+    manifest = json.loads(edits_path.read_text()) if edits_path else None
     disc = Disc(ROOT/SOURCES['kor'][0])
     try:
-        if sha(disc.raw) != SOURCES['kor'][1] or manifest['source_disc_sha256'] != SOURCES['kor'][1]:
+        if sha(disc.raw) != SOURCES['kor'][1] or (manifest and manifest['source_disc_sha256'] != SOURCES['kor'][1]):
             raise ValueError('Unsupported source disc')
         table = disc.files()
         data = disc.read(**{k: table['SCN/DG.SCN'][k] for k in ('lba','size')})
-        if manifest['source_dg_sha256'] != sha(data):
+        if manifest and manifest['source_dg_sha256'] != sha(data):
             raise ValueError('Stale DG input binding')
         # Rebuild the character map from reviewed pixels and human decisions;
         # translator JSON cannot substitute its own mapping or OCR guesses.
         output.mkdir(parents=True)
         restore(output/'verified-text', ROOT/'work/survey', SOURCE.parent, DEFAULT_FONT)
         map_path = output/'verified-text/character-map.json'
+        if manifest is None:
+            manifest = {'purpose': 'KS X 1001 font expansion, existing text preserved',
+                        'source_disc_sha256': SOURCES['kor'][1], 'source_dg_sha256': sha(data),
+                        'character_map_sha256': sha(map_path.read_bytes()), 'edits': []}
         if manifest['character_map_sha256'] != sha(map_path.read_bytes()):
             raise ValueError('Character map changed; review/re-export edits')
         mapping = json.loads(map_path.read_text())
+        font_writes, font_report = [], None
+        if expand_font:
+            from font_expand import compile_font
+            ef = table['SLPS_017.97']
+            mapping, font_writes, font_report = compile_font(
+                disc.read(ef['lba'], ef['size']), mapping, output/'font')
         codec = LegacyCodec({e['code']: e['character'] for e in mapping['entries']})
         parsed = decode(data)
         changed, writes = replace_text(data, parsed, manifest['edits'], codec)
@@ -147,6 +160,7 @@ def build(edits_path, output, alignment=False):
                 raise ValueError('Alignment instruction decode mismatch')
             writes.append({'id': 'alignment-repair', 'file': 'SLPS_017.97', 'file_offset': OFFSET,
                            'before': BEFORE.hex(), 'after': AFTER.hex()})
+        writes.extend(font_writes)
         plan = sector_plan(disc, table, writes)
         image = output/'dg-dev.iso'
         with image.open('xb') as f:
@@ -171,6 +185,15 @@ def build(edits_path, output, alignment=False):
                 raise ValueError('Final ISO DG re-extraction differs')
             if final.read(mf['lba'], mf['size']) != changed[0x800:0x800+len(mirror)]:
                 raise ValueError('Final ISO MAPHEAD mirror differs')
+            ef = table['SLPS_017.97']
+            expected_exe = bytearray(disc.read(ef['lba'], ef['size']))
+            for write in writes:
+                if write['file'] == 'SLPS_017.97':
+                    at = write['file_offset']
+                    value = bytes.fromhex(write['after'])
+                    expected_exe[at:at+len(value)] = value
+            if final.read(ef['lba'], ef['size']) != bytes(expected_exe):
+                raise ValueError('Final EXE re-extraction differs')
             for lba in plan:
                 if regenerate(final.sector(lba)) != final.sector(lba):
                     raise ValueError('Final EDC/ECC failed')
@@ -178,7 +201,8 @@ def build(edits_path, output, alignment=False):
                       'requested_text_units': len(manifest['edits']),
                       'verified_input_payload_bytes': sum(len(bytes.fromhex(e['expected_hex'])) for e in manifest['edits']),
                       'source_sha256': SOURCES['kor'][1], 'output_sha256': sha(final.raw),
-                      'dg_sha256': sha(changed), 'edits_manifest_sha256': sha(edits_path.read_bytes()),
+                      'dg_sha256': sha(changed), 'edits_manifest_sha256': sha(edits_path.read_bytes()) if edits_path else None,
+                      'font_expansion': font_report,
                       'character_map_sha256': sha(map_path.read_bytes()),
                       'writes': writes, 'sectors': [
                           {'lba': lba, 'raw_sector_offset': lba*2352,
@@ -190,7 +214,7 @@ def build(edits_path, output, alignment=False):
         finally:
             final.close()
         (output/'dg-dev.cue').write_text('FILE "dg-dev.iso" BINARY\n  TRACK 01 MODE2/2352\n    INDEX 01 00:00:00\n')
-        (output/'edits.json').write_bytes(edits_path.read_bytes())
+        write_json(output/'edits.json', manifest)
         write_json(output/'build.json', report)
         return report
     finally:
@@ -199,8 +223,9 @@ def build(edits_path, output, alignment=False):
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--edits', type=Path, required=True)
+    p.add_argument('--edits', type=Path)
     p.add_argument('--output', type=Path, required=True)
     p.add_argument('--alignment-repair', action='store_true')
+    p.add_argument('--expand-font', action='store_true')
     args = p.parse_args()
-    print(json.dumps(build(args.edits, args.output, args.alignment_repair), ensure_ascii=False, indent=2))
+    print(json.dumps(build(args.edits, args.output, args.alignment_repair, args.expand_font), ensure_ascii=False, indent=2))

@@ -3,8 +3,8 @@
 사용자가 과거 제작한 `Digimon World (patched).iso`에서 패치 자원을 복원하고,
 폰트 확장, 주인공·디지몬 이름의 조합형 한글 입력, 번역 개선을 진행하는 프로젝트입니다.
 
-현재는 **기존 패치 복원 및 엔진 조사 단계**입니다. 문자열 정렬 문제의 개발용 수정 ISO를 만들었으며,
-폰트 확장·조합형 이름 입력·번역 개선을 완료한 업그레이드판은 아직 없습니다.
+기존 패치 복원, DG 재삽입과 두 경로의 게임 검증, 문자열 정렬 수정 및 **한글 2,350자 확장**을 구현했습니다.
+조합형 이름 입력과 전체 번역 개선은 남아 있으며, 전체 업그레이드 배포판은 아직 없습니다.
 현재 결론·위험·다음 작업은 [docs/current.md](docs/current.md)가 관리합니다.
 
 ## 복원 결과 보기
@@ -62,7 +62,7 @@ python3 -m unittest discover -s tools -p 'test_*.py'
 
 후속 도구는 실제 MIPS 소비자를 기준으로 텍스트 4,617개의 경계를 확인하고,
 길이와 제어 위치를 유지하는 개발용 ISO를 만듭니다. script 0의 실제 로드 원본인
-`MAPHEAD.SCN` 사본도 함께 갱신합니다. 전체 VM 해석·길이 확대·게임 화면 검증은 남아 있습니다.
+`MAPHEAD.SCN` 사본도 함께 갱신합니다. MAPHEAD/DG 각 한 경로의 실제 화면과 후속 진행도 확인했습니다. 전체 VM 해석·길이 확대는 남아 있습니다.
 
 ```sh
 python3 tools/dg_analyze.py
@@ -123,3 +123,21 @@ python3 -m venv .venv
 `work/build/alignment-dev/`에 ISO·CUE·쓰기를 검증한 보고서가 생성됩니다.
 기존 출력은 덮어쓰지 않으며 `--output`으로 새 경로를 지정할 수 있습니다.
 정확한 입력·기존 명령 바이트·sector EDC/ECC·전체 출력 diff를 검사합니다.
+
+## 한글 2,350자 확장
+
+기존 한글 912자는 모두 KS X 1001의 2,350자에 포함됩니다. 추가 1,438자를 공급하고,
+기존 991개 글자·기호 슬롯과 대체 글꼴의 코드/픽셀을 보존하는 확장 빌드를 구현했습니다.
+반복 행 묶음을 공유하여 기존 폰트 영역에 넣으므로 ISO 크기와 상주 RAM은 늘지 않습니다.
+
+```sh
+python3 -m pip install -r requirements-font.txt
+# LLVM 23.1.2 llvm-mc/llvm-objcopy 필요 (PATH 또는 LLVM_BIN)
+python3 tools/dg_build.py --expand-font --alignment-repair --output work/build/font-my-build
+python3 tools/font_cpu_verify.py work/build/font-my-build
+```
+
+`--edits`를 함께 지정하면 확장 문자표로 기존 DG 재삽입을 수행합니다.
+[폰트 형식·빌드·검증 범위](docs/font-expansion.md)를 참고하세요.
+조합형 이름 입력은 현재의 KS X 1001 2,350자를 대상으로 구현합니다.
+사용자 결정에 따라 현대 한글 11,172자 전체 지원은 필요하지 않으며 완료 조건에 포함하지 않습니다.

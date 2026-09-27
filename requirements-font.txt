@@ -1,0 +1,6 @@
+-r requirements-analysis.txt
+fonttools==4.65.0
+pyelftools==0.33
+# Optional isolated MIPS verifier (font_cpu_verify.py):
+unicorn==2.1.4
+# External assembler/objcopy: LLVM 23.1.2, llvm-mc -mcpu=mips1.
