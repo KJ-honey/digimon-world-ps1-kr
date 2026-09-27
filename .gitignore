@@ -1,0 +1,14 @@
+*.iso
+*.ISO
+*.bin
+*.BIN
+*.cue
+*.img
+*.ppf
+*.xdelta
+work/
+.venv/
+__pycache__/
+.DS_Store
+.emucap/
+bios/
