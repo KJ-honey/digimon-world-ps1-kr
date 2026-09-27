@@ -360,6 +360,28 @@ QA는 시험 문장이지 번역 개선판이 아니다. 두 번째 QA 대사(�
 `work/build/font-expanded-final/font/cpu-verification.json`, 실제 화면·RAM·세이브는
 `work/font/verification.json` 및 같은 디렉터리에 보존했다. 메모리카드 저장/재로드와 새로운 조합형 입력은 검증하지 않았다.
 
+### 동일 장면 폰트 비교 (`font-compare-001`, 2026-09-28)
+
+사용자가 `work/font-compare/`에 제공한 Galmuri11, Mona12TextKR,
+ThinDungGeunMo와 현재 비트맵을 첫 할배몬 대사에서 비교했다.
+`tools/font_compare.py --asset-root <원본 작업 폴더>`로 검수된 문자표의
+한글 913칸만 12px/1-bit/12×11로 생성하며 기호와 대체 글꼴은 보존한다.
+세 후보 모두 cmap 누락·빈 글자·칸 밖 잉크 0건이다.
+
+Mednafen 1.32.1 / emucap df23142에서 정렬 수정판(`ee2ded56…ed7cdb3`)의
+대사 표시 전 동일 state를 로드하고, RAM `0x80128D38..0x8012E277`의
+21,824바이트 비트맵 테이블만 교체한 뒤 정상 입력으로 진행했다.
+원본 PNG 4장은 실제 게임 렌더링이며 각 화면 한글 27칸(총 108칸)이 생성 glyph와
+0픽셀 차이, RAM 테이블도 전체 일치했다. 같은 장면이지만 대기 애니메이션의 작은
+프레임 차이는 있다. 글자를 합성한 정적 atlas 증거가 아니다.
+
+산출물은 이 작업 트리의 `work/font-compare/`와 원본 작업 폴더의
+`work/font-compare/comparison-20260928/`에 보존했다. `screenshots/`에 원본 4장,
+`comparison.png`에 2배 nearest-neighbor 비교표, `verification.json`과
+`pixel-verification.json`에 방법·해시·픽셀 검증이 있다.
+현재 게임 칸에 맞춘 시각 비교용 RAM 실험이며, 후보 글꼴의 2,350자 압축 공급이나
+제품 ISO 통합 완료를 뜻하지 않는다. 기존 폰트 선택은 변경하지 않았다.
+
 ### 이름 입력
 
 `SHOP_REL.BIN`의 `0x7A90` 이후에 원문 이름 라벨 및 가나 선택 배열이 있고
