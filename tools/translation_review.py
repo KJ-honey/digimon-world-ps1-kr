@@ -134,7 +134,17 @@ class Workspace:
         restored_source_controls = (controls(row['source']) != controls(row['existing'])
                                     and controls(text) == controls(row['source'])
                                     and glyphs(text) == glyphs(row['existing']))
-        if TOKEN.findall(text) != TOKEN.findall(row['existing']) and not restored_source_controls:
+        # A prior translation can omit a button glyph together with its colors.
+        # Restore only the exact source token stream, retaining every existing
+        # unknown glyph in order; never infer a replacement button or drop one.
+        source_glyphs = iter(glyphs(row['source']))
+        retains_existing_glyphs = all(any(candidate == glyph for candidate in source_glyphs)
+                                      for glyph in glyphs(row['existing']))
+        restored_source_tokens = (controls(row['source']) != controls(row['existing'])
+                                  and TOKEN.findall(text) == TOKEN.findall(row['source'])
+                                  and retains_existing_glyphs)
+        if (TOKEN.findall(text) != TOKEN.findall(row['existing'])
+                and not restored_source_controls and not restored_source_tokens):
             raise ValueError('보호 토큰의 순서·값·개수를 유지해 주세요. 원문 토큰 보기에서 확인할 수 있습니다.')
         remainder = TOKEN.sub('', text)
         if '⟦' in remainder or '⟧' in remainder or any(ord(c) < 32 and c not in '\n\t' for c in remainder):
@@ -175,6 +185,8 @@ class Workspace:
         controls = lambda s: re.findall(r'⟦[0-9A-F]{4,8}⟧', s)
         item['source_control_difference'] = controls(row['source']) != controls(row['existing'])
         item['source_controls_restored_in_draft'] = item['source_control_difference'] and controls(item['text']) == controls(row['source'])
+        item['source_tokens_restored_in_draft'] = (TOKEN.findall(row['source']) != TOKEN.findall(row['existing'])
+                                                 and TOKEN.findall(item['text']) == TOKEN.findall(row['source']))
         data['entries'][row['id']] = item
         atomic_json(self.directory / 'reviews.json', data)
         return item

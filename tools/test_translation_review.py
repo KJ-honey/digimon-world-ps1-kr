@@ -87,6 +87,20 @@ class TranslationReviewTests(unittest.TestCase):
                 {'kind':'terminator','raw':'0000'}]
         self.assertEqual(render_tokens(tokens, {'8140':'　'}), '　⟦03000000⟧⟦G:ABCD⟧⟦0D00⟧')
 
+    def test_missing_button_restoration_requires_exact_source_tokens(self):
+        row=dict(self.row, source='⟦0104⟧⟦G:8283⟧⟦0101⟧と⟦G:8284⟧⟦0D00⟧',
+                 existing='왼쪽과 ⟦G:8284⟧⟦0D00⟧')
+        draft='⟦0104⟧⟦G:8283⟧⟦0101⟧ 버튼과 ⟦G:8284⟧⟦0D00⟧'
+        Workspace.validate(row, draft, 'draft')
+        for invalid in [draft.replace('8283', '8282'),
+                        draft.replace('⟦G:8284⟧', ''),
+                        draft.replace('⟦G:8283⟧', '⟦G:8283⟧⟦G:8283⟧')]:
+            with self.subTest(text=invalid), self.assertRaises(ValueError):
+                Workspace.validate(row, invalid, 'draft')
+        # A source restoration cannot erase or replace an existing raw glyph.
+        with self.assertRaises(ValueError):
+            Workspace.validate(dict(row, existing='⟦G:9999⟧⟦0D00⟧'), draft, 'draft')
+
 
 if __name__ == '__main__':
     unittest.main()
