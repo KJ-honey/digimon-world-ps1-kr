@@ -55,8 +55,27 @@ python3 -m unittest discover -s tools -p 'test_*.py'
 검수·추출 입력의 해시별 사본도 `work/text/inputs/`에 보존합니다.
 
 7,857쌍의 후보 payload가 양쪽 원본 DG 바이트와 각각 왕복 일치합니다. VM 명령 경계는
-여전히 미검증이며, 전체 번역량이나 제품 재삽입 가능 범위를 뜻하지 않습니다.
+이 초기 검색 단계에서는 미검증이며, 전체 번역량이나 제품 재삽입 가능 범위를 뜻하지 않습니다.
 폰트 교체·확장과 제품 빌드 연결은 후속 작업입니다.
+
+## DG 소비자 분석과 재삽입
+
+후속 도구는 실제 MIPS 소비자를 기준으로 텍스트 4,617개의 경계를 확인하고,
+길이와 제어 위치를 유지하는 개발용 ISO를 만듭니다. script 0의 실제 로드 원본인
+`MAPHEAD.SCN` 사본도 함께 갱신합니다. 전체 VM 해석·길이 확대·게임 화면 검증은 남아 있습니다.
+
+```sh
+python3 tools/dg_analyze.py
+python3 tools/dg_export.py --id dg-text-0042e0 --output work/dg/my-edits.json
+# manifest의 text를 편집한 뒤 새 출력 경로로 빌드
+python3 tools/dg_build.py --edits work/dg/my-edits.json --output work/build/my-dg --alignment-repair
+```
+
+명령·원문·한국어·제어 토큰은 `work/dg/analysis/`에 생성됩니다. 없는 글자, 제어 변경,
+길이 차이, 미확인 후보는 오류로 중단합니다. 225 영역 전체 DG 왕복과 확인 텍스트 전체
+무변경 재삽입 ISO 해시 일치를 확인했습니다. `work/build/dg-qa/`는 합성 시험 문장이 든
+QA 전용 산출물이며 번역판이 아닙니다.
+[소비자 주소·재현 절차·검증 범위](docs/dg-script.md)를 참고하세요.
 
 ## 재현
 
