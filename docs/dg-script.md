@@ -138,7 +138,12 @@ Unicorn 결과는 **독립된 CPU 함수 실행 증거**이며 PS1 화면, load 
 
 이 세션의 emucap port 47800은 다른 세션 토큰의 기존 `digimon-alignment-dev`가
 점유 중이었다. 그 프로세스에 연결·중단·상태 변경을 하지 않았다.
-이번 개발용 ISO의 실제 게임 화면 검증은 아직 없고 `gameplay_runtime_verified=false`다.
+당시 개발용 ISO의 실제 게임 화면 검증은 없었다. 후속 `dg-runtime-001`에서 기존 QA의
+콜드 부팅과 자유 이동, MAPHEAD 수정 바이트 로드를 확인했다. 별도 `dg-runtime-qa`에서는
+자연 도달 경로를 확인한 두 문장 `0059c0`/`064958`의 디스크→RAM→소비자→화면 및
+다음 대사 진행을 통과했다. 원래 QA 두 문장의 화면 검증으로 일반화하지 않는다.
+빌드 보고서의 `gameplay_runtime_verified=false`는 빌드 시점 값이며 실행 결과로 덮어쓰지 않는다.
+실행 증거는 `work/runtime/dg-verification/verification.json`과 [실행 기록](dg-runtime.md)에 분리한다.
 모든 결과는 개발용이며 폰트 확장·조합형 이름 입력·전체 번역 개선 완료본이 아니다.
 
 ## 외부 단서
