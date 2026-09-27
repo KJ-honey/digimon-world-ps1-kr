@@ -15,6 +15,7 @@ from dg_analyze import verified_texts
 from dg_build import sector_plan
 from dg_script import decode, text_tokens
 from dg_spacing import dialogue_codec, is_half_space
+from dg_control_restorations import restoration_allowed
 from dg_pixel_row import compile_pixel_row
 from font_expand import assemble, compile_font
 from glyph_review import SOURCE
@@ -31,9 +32,15 @@ HOOK_BEFORE = bytes.fromhex('d0ffbd271c00bfaf')
 MARKER = b'\x15\xd7'
 BLOCK = 2048
 # 800F44E0..4884: fixed digit loops in 800F4F44; names are six 2-byte
-# characters plus NUL (see docs/current.md). Other dynamic tables stay gated.
+# characters plus NUL (see docs/current.md).
 DYNAMIC_BYTES = {4: 6, 5: 12, 6: 12, 10: 12, 11: 8, 16: 10,
                  19: 6, 20: 6, 21: 6}
+# User-specified ceiling (2026-09-28), not an exhaustive table measurement.
+# Species/card, technique, item, song and tournament names all use this bound.
+# The inserted output replaces the two-byte command; do not add its bytes again.
+DYNAMIC_TABLE_MAX_CHARS = 10
+DYNAMIC_TABLE_OPCODES = (0x07, 0x08, 0x09, 0x11, 0x12)
+DYNAMIC_BYTES.update({op: 2 * DYNAMIC_TABLE_MAX_CHARS for op in DYNAMIC_TABLE_OPCODES})
 
 
 def validate_manifest(manifest):
@@ -52,7 +59,7 @@ def validate_manifest(manifest):
             raise ValueError('Unexpected edit fields/types')
 
 
-def validate_text(old, new, codec):
+def validate_text(old, new, codec, *, entry_id=None):
     """Preserve ordered controls/symbols except the verified 0F00 whitespace."""
     old_end, before = text_tokens(old, 0, len(old))
     new_end, after = text_tokens(new, 0, len(new))
@@ -61,7 +68,8 @@ def validate_text(old, new, codec):
     protected = lambda ts: [(t['kind'], t['raw']) for t in ts
                            if not is_half_space(t, codec) and
                            (t['kind'] != 'glyph' or codec.mapping.get(t['raw'].upper()) is None)]
-    if protected(before) != protected(after):
+    restored = protected(before) != protected(after)
+    if restored and not restoration_allowed(entry_id, old, protected(after)):
         raise ValueError('Protected control/argument/unknown glyph sequence changed')
     # Output rows have a 64-byte stride, independent of source allocation.
     # Dynamic insertion budgets require a separately established environment.
@@ -82,6 +90,27 @@ def validate_text(old, new, codec):
             row = 0
     if len(new)+9 > BLOCK:
         raise ValueError('Expanded text exceeds one-sector bank record')
+    if restored:
+        # These reviewed restorations use full-width glyphs, 01 colors, 05
+        # player names, 0F spaces and 0D row breaks only. The real glyph
+        # uploader refuses origins >= 244; test the six-character name case.
+        x = 0
+        for token in after:
+            raw = bytes.fromhex(token['raw'])
+            if token['kind'] == 'glyph':
+                if raw != b'\x81\x40' and x >= 244:
+                    raise ValueError('Restored text exceeds DG glyph start limit (X < 244); review line layout')
+                x += 12
+            elif raw[0] == 5:
+                if x + DYNAMIC_BYTES[5] // 2 * 12 - 12 >= 244:
+                    raise ValueError('Restored text exceeds DG glyph start limit (X < 244); review line layout')
+                x += DYNAMIC_BYTES[5] // 2 * 12
+            elif raw[0] == 15:
+                x += 6
+            elif raw[0] == 13:
+                x = 0
+            elif raw[0] not in (0, 1):
+                raise ValueError('Unreviewed layout command in control restoration')
     return budgets
 
 
@@ -107,7 +136,7 @@ def prepare_bank(data, parsed, edits, codec):
         if len(old) < 4 or len(old) > 65535 or len(records) >= 65536:
             raise ValueError('Descriptor/record representation overflow: '+key)
         try:
-            budgets = validate_text(old, new, codec)
+            budgets = validate_text(old, new, codec, entry_id=key)
         except ValueError as exc:
             raise ValueError(f'{key}: {exc}') from exc
         index = len(records)
@@ -325,7 +354,8 @@ def build(edits_path, output, expand_font=False):
                              'ideographic_space':'8140 / 12 px',
                              'bytes_per_space':2,'renderer_code_changed':bool(pixel_report),
                              'pixel_row':pixel_report},
-                  'limitations':['same ordered controls/line count', 'dynamic table insertion budgets pending (07/08/09/11/12 hex)',
+                  'dynamic_table_max_characters':DYNAMIC_TABLE_MAX_CHARS,
+                  'limitations':['ordered controls/line count except explicitly reviewed restorations', 'dynamic table ceiling is user-specified, not independently measured',
                                  'extra synchronous CD read for each changed text',
                                  'full native/overlay caller and streaming regression pending']}
         write_json(output/'build.json',report)

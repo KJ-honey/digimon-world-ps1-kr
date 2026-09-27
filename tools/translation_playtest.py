@@ -11,7 +11,7 @@ import unicodedata
 from pathlib import Path
 
 from dg_analyze import read_source, verified_texts
-from dg_expand import validate_text
+from dg_expand import DYNAMIC_TABLE_MAX_CHARS, validate_text
 from dg_script import decode
 from dg_spacing import dialogue_codec
 from survey import ROOT, SOURCES, sha, write_json
@@ -81,7 +81,7 @@ def export(directory, output, font_map, defer_failed=False):
             else:
                 encoded, aliases = encode_draft(draft['text'], codec)
                 new = encoded + b'\0\0'
-                validate_text(old, new, codec)
+                validate_text(old, new, codec, entry_id=key)
             unchanged += new == old
             edits.append(dict(id=key, expected_hex=old[:-2].hex(), text=codec.decode(new[:-2])))
         except ValueError as exc:
@@ -96,6 +96,8 @@ def export(directory, output, font_map, defer_failed=False):
                   total=len(workspace.rows), selected=len(edits), unchanged=unchanged,
                   changed=len(edits)-unchanged, deferred=deferred,
                   deferred_reason_counts=dict(Counter(e['reason'] for e in deferred)),
+                  dynamic_table_max_characters=DYNAMIC_TABLE_MAX_CHARS,
+                  dynamic_table_budget_basis='user-specified ceiling; not independently measured',
                   encoding_aliases=aliases, duplicate_hangul_policy='new 늪 uses 88C0; unchanged payload stays byte-identical',
                   deferral_explicitly_selected=defer_failed)
     write_json(output/'selection.json', report)
