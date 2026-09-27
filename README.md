@@ -18,6 +18,27 @@
 대조 페이지의 한국어는 ISO에서 추출한 글꼴로 그립니다. OCR 오인식이 번역에 섞이지 않도록
 OCR 제안과 확정된 문자표를 구분합니다. 문장 경계는 아직 VM 전체 해석으로 검증하지 않은 후보입니다.
 
+## 글리프 픽셀 대조와 직접 검수
+
+제공된 [굴림 2.21 소스](https://github.com/googlefonts/gulim/tree/main/sources)의
+12px 내장 비트맵을 12×11 게임 글리프와 비교합니다. 폰트 파일은 `work/reference/`에 두고
+Git에 포함하지 않습니다. 새 환경에서는 먼저 다음 명령으로 받습니다.
+
+```sh
+git clone --depth 1 https://github.com/googlefonts/gulim.git work/reference/gulim
+git -C work/reference/gulim checkout 012723a8d5b6a6dc920330f26d165422c3014fd6
+python3 tools/match_gulim.py
+python3 tools/glyph_review.py --open
+```
+
+변경 글리프 919개 중 910개가 픽셀 완전 일치합니다. 불일치 9개 중 3개는 가장
+가까운 굴림 글자와 1픽셀 차이여서 기본 검수 목록에 나옵니다. 후보를 고르거나 한 글자를
+직접 입력한 뒤 **문자 저장**을 누릅니다. 나머지 6개는 굴림 한글과 60픽셀 이상 달라
+별도 목록에 두고 근거 없는 후보를 숨겼습니다.
+기존 수동 검수 결과는 삭제하지 않고 별도 표시합니다. 수동 결과와 픽셀 대조 결과가 충돌하면
+자동 일치 결과를 우선 보여줍니다. 검수 파일 `work/review/glyph-review.json`은 Git에서 제외되므로
+별도 백업을 권장합니다. 아직 제품 빌드 입력에는 연결하지 않았습니다.
+
 ## 재현
 
 프로젝트 루트에 사용자 소유의 두 ISO를 둡니다. 입력 SHA-256은 `tools/survey.py`에 고정되어 있으며
