@@ -469,6 +469,39 @@ Safari의 별도 3문장 사본에서 긴 문장·메모 저장, 승인/보류 �
 문구 승인과 제품 자격을 분리하여 모든 초안의 `product_eligible=false`를 유지한다.
 사용 방법·정확한 범위·후속 조건: [translation-review.md](translation-review.md).
 
+### 번역 초안 플레이 테스트 (`translation-playtest-001`, 2026-09-28)
+
+사용자는 미검수 초안을 실제 게임에 적용하고 새 게임부터 할배몬 등장까지만 검사한 뒤
+전체 테스트를 넘기도록 요청했다. 전수 삽입 검사에서 실패한 **36개는 기존 번역으로
+유지하고 나머지를 적용**하도록 명시적으로 선택했다. 검수 상태와 원본 초안은 수정하지 않았다.
+
+`tools/translation_playtest.py`가 양쪽 불변 ISO의 실제 소비자 경계/raw bytes를 검증하고
+초안을 별도 개발 manifest로 내보낸다. 공백·ASCII 숫자/영문·문장부호는 기존 전각 셀
+코드로 인코딩하며 alias 표를 보존한다. 없는 글자는 거부한다. 동일 문구는 원래 코드와
+중복 글리프 정체성까지 byte-identical로 보존하며 새 `늪`은 명시적으로 `88C0`을 쓴다.
+`--defer-failed` 없이는 오류 목록만 남기고 manifest를 생성하지 않는다.
+
+- 확인된 4,617개 중 4,581개 선택: 실제 payload 변경 4,379개, 동일 202개.
+- 보류 36개: 동적 table 삽입 예산 미확정 25개, 원문 제어/버튼 복원 9개,
+  `064416`의 64-byte 행 버퍼 초과 1개, `0982f0`의 소문자 `m` 미지원 1개.
+  ID·초안·이유는 `work/translation-playtest/selected-001/selection.json`에 있다.
+- ISO/CUE: `work/build/translation-playtest-001/dg-expanded.cue`.
+  ISO SHA-256 `d7579eb9953333a2facca784b5f844eaf5b79b930f1e3ba6164a9f654530a07f`.
+  현재 선택된 Mona12 폰트, 2,350자 공급, 정렬 수정, 별도 대사 bank를 결합했다.
+- 최종 전체 sector 계획/diff·재추출 검증, 변경 대사 4,379개의 CPU 소비/continuation,
+  폰트 2,430칸의 glyph/4bpp CPU 검증을 통과했다. CPU의 CD I/O·BIOS는 stub이며
+  전체 게임 실행 증거와 구분한다. 새 exporter 테스트 3개 통과.
+- Mednafen 1.32.1 / emucap df23142에서 **콜드 부팅 → 새로운 모험 → 메모리카드
+  사용 안 함 → 할배몬 등장과 첫 수정 대사 표시**를 확인했다. 첫 대사에 관찰된
+  누락 글자/대사창 잘림은 없다. 이후 질문이나 이름 입력으로 진행하지 않았다.
+  기존 state 로드·RAM/코드 쓰기는 없다. 화면/state/검증 기록은
+  `work/translation-playtest/jijimon-first.png`, `jijimon-first.mcs`, `verification.json`.
+
+재현: `python3 tools/translation_playtest.py --output work/translation-playtest/새폴더 --defer-failed`,
+이어서 `tools/dg_expand.py --edits 해당폴더/edits.json --expand-font --output work/build/새폴더`.
+이번 결과는 사용자에게 넘기는 미검수 테스트판이다. 보류 36개의 신번역 적용, 이후 진행,
+전체 회귀와 메모리카드 저장/재로드는 통과로 보고하지 않는다.
+
 ### 이름 입력
 
 `SHOP_REL.BIN`의 `0x7A90` 이후에 원문 이름 라벨 및 가나 선택 배열이 있고
