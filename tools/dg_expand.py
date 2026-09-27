@@ -14,10 +14,12 @@ from cd_sector import regenerate
 from dg_analyze import verified_texts
 from dg_build import sector_plan
 from dg_script import decode, text_tokens
+from dg_spacing import dialogue_codec, is_half_space
+from dg_pixel_row import compile_pixel_row
 from font_expand import assemble, compile_font
 from glyph_review import SOURCE
 from match_gulim import DEFAULT_FONT
-from restore_text import LegacyCodec, restore
+from restore_text import restore
 from survey import ROOT, SOURCES, Disc, dual32, sha, write_json
 
 SHIFT = 0x1800
@@ -51,13 +53,14 @@ def validate_manifest(manifest):
 
 
 def validate_text(old, new, codec):
-    """Move glyph boundaries, preserve ordered controls and unresolved symbols."""
+    """Preserve ordered controls/symbols except the verified 0F00 whitespace."""
     old_end, before = text_tokens(old, 0, len(old))
     new_end, after = text_tokens(new, 0, len(new))
     if old_end != len(old) or new_end != len(new):
         raise ValueError('Early terminator/trailing text')
     protected = lambda ts: [(t['kind'], t['raw']) for t in ts
-                           if t['kind'] != 'glyph' or codec.mapping.get(t['raw'].upper()) is None]
+                           if not is_half_space(t, codec) and
+                           (t['kind'] != 'glyph' or codec.mapping.get(t['raw'].upper()) is None)]
     if protected(before) != protected(after):
         raise ValueError('Protected control/argument/unknown glyph sequence changed')
     # Output rows have a 64-byte stride, independent of source allocation.
@@ -250,13 +253,20 @@ def build(edits_path, output, expand_font=False):
         if sha(map_path.read_bytes())!=manifest['character_map_sha256']:
             raise ValueError('Character map changed; re-export')
         mapping = json.loads(map_path.read_text())
-        writes, font_report = [], None
+        writes, font_report, pixel_report = [], None, None
         if expand_font:
             mapping,font_writes,font_report = compile_font(exe,mapping,output/'font')
+            pixel_writes,pixel_report = compile_pixel_row(exe,font_writes,font_report,output/'pixel-row')
             writes.extend(font_writes)
-        codec = LegacyCodec({e['code']:e['character'] for e in mapping['entries']})
+            writes.extend(pixel_writes)
+        codec = dialogue_codec(mapping)
         parsed = decode(data)
         changed,records,entries = prepare_bank(data,parsed,manifest['edits'],codec)
+        if not expand_font:
+            for entry in entries:
+                payload = bytes.fromhex(entry['expanded_hex'])
+                if any(is_half_space(t,codec) for t in text_tokens(payload,0,len(payload))[1]):
+                    raise ValueError('Exact DG half spaces require --expand-font (pixel row renderer)')
         if not entries:
             raise ValueError('No changed text; use dg_build.py for byte-identical no-op builds')
         bank_offset = len(data)+SHIFT
@@ -311,6 +321,10 @@ def build(edits_path, output, expand_font=False):
                   'changed_original_lbas':sorted(l for l in plan if l<len(disc.raw)//2352),
                   'full_image_diff_verified':True,'reextraction_verified':True,
                   'gameplay_runtime_verified':False,
+                  'spacing':{'ascii_space':'0F00 / 6 px',
+                             'ideographic_space':'8140 / 12 px',
+                             'bytes_per_space':2,'renderer_code_changed':bool(pixel_report),
+                             'pixel_row':pixel_report},
                   'limitations':['same ordered controls/line count', 'dynamic table insertion budgets pending (07/08/09/11/12 hex)',
                                  'extra synchronous CD read for each changed text',
                                  'full native/overlay caller and streaming regression pending']}

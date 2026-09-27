@@ -13,7 +13,7 @@ from pathlib import Path
 from dg_analyze import read_source, verified_texts
 from dg_expand import validate_text
 from dg_script import decode
-from restore_text import LegacyCodec
+from dg_spacing import dialogue_codec
 from survey import ROOT, SOURCES, sha, write_json
 from translation_review import Workspace, TOKEN, WORK
 
@@ -24,6 +24,8 @@ def encode_draft(text, codec):
     aliases = {unicodedata.normalize('NFKC', char): char for char in codec.reverse
                if len(unicodedata.normalize('NFKC', char)) == 1}
     aliases.update({' ': '\u3000', ',': '、', '.': '。', '~': '〜', '·': '・', '×': 'ｘ'})
+    if codec.mapping.get('0F00') == ' ':
+        aliases[' '] = ' '
     def glyphs(part):
         result = bytearray()
         for char in part:
@@ -60,7 +62,7 @@ def export(directory, output, font_map, defer_failed=False):
     mapping = json.loads(font_map.read_text())
     if mapping.get('font_profile') not in ('ksx1001-preserve-legacy-v1', 'ksx1001-mona12-v1'):
         raise ValueError('Expected verified expanded font map')
-    codec = LegacyCodec({entry['code']: entry['character'] for entry in mapping['entries']})
+    codec = dialogue_codec(mapping)
     if set(workspace.rows) != set(reviews['entries']) or set(workspace.rows) != set(texts['kor']):
         raise ValueError('Incomplete review/source population')
     edits, deferred, aliases = [], [], {}
