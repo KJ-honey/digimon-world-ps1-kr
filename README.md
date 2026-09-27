@@ -9,6 +9,8 @@
 
 ## 복원 결과 보기
 
+- [검수 문자표를 적용한 원문·한국어 대조](work/text/review.html): 한국어 검색, 원본 비트맵과 Unicode 비교.
+- [문자표](work/text/character-map.json), [Unicode 복원 검증](work/text/summary.json).
 - [원문과 한국어 비트맵 대조 페이지](work/recovered/review.html): 대사 후보 검색, 원본 바이트 확인, 전체 글꼴 보기.
 - [파일별 변경 목록](work/survey/files.csv), [전체 조사 결과](work/survey/report.json).
 - [폰트·대사 복원 결과](work/recovered/summary.json).
@@ -37,7 +39,24 @@ python3 tools/glyph_review.py --open
 별도 목록에 두고 근거 없는 후보를 숨겼습니다.
 기존 수동 검수 결과는 삭제하지 않고 별도 표시합니다. 수동 결과와 픽셀 대조 결과가 충돌하면
 자동 일치 결과를 우선 보여줍니다. 검수 파일 `work/review/glyph-review.json`은 Git에서 제외되므로
-별도 백업을 권장합니다. 아직 제품 빌드 입력에는 연결하지 않았습니다.
+별도 백업을 권장합니다. 마지막 세 글자는 `뼈·팬·늪`으로 검수되었습니다.
+
+검수 결과를 기존 대사 후보의 Unicode 복원에 적용합니다.
+
+```sh
+python3 tools/restore_text.py
+python3 -m unittest discover -s tools -p 'test_*.py'
+```
+
+`work/text/`에 문자표, 검색 가능한 대조 HTML, 후보 JSONL, 검증 보고서를 만듭니다.
+한글 913칸은 912자로 대응되며 중복된 `늪`은 `<88C0:늪>`/`<95E2:늪>`으로 구분합니다.
+특수 글리프 17칸과 의미 미확정 제어 후보는 `<XXXX>`로 보존합니다. 문자표는 픽셀 데이터와
+분리되어 있어 추후 폰트 타일 재생성에서도 문자 정체성을 유지할 수 있습니다.
+검수·추출 입력의 해시별 사본도 `work/text/inputs/`에 보존합니다.
+
+7,857쌍의 후보 payload가 양쪽 원본 DG 바이트와 각각 왕복 일치합니다. VM 명령 경계는
+여전히 미검증이며, 전체 번역량이나 제품 재삽입 가능 범위를 뜻하지 않습니다.
+폰트 교체·확장과 제품 빌드 연결은 후속 작업입니다.
 
 ## 재현
 
