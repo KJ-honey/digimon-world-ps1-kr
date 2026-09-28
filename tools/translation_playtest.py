@@ -25,7 +25,7 @@ def encode_draft(text, codec):
     aliases = {unicodedata.normalize('NFKC', char): char for char in codec.reverse
                if len(unicodedata.normalize('NFKC', char)) == 1}
     aliases.update({' ': '\u3000', ',': '、', '.': '。', '~': '〜', '·': '・', '×': 'ｘ'})
-    if codec.mapping.get('0F00') == ' ':
+    if any(codec.mapping.get(code) == ' ' for code in ('0F00', '0F01')):
         aliases[' '] = ' '
     def glyphs(part):
         result = bytearray()

@@ -1,5 +1,9 @@
 # 지명·아이템·디지몬 이름 번역 관리
 
+후속 재삽입 구현: [catalog-reinsertion.md](catalog-reinsertion.md).
+`dg_expand.py --catalog-edits`로 별도 저장 영역·일반 문자열 반각 공백을 지원한다.
+인라인 이름의 20-byte 필드 초과는 미지원이다. 아래는 최초 추출/검수 연결 당시 기록이다.
+
 2026-09-28 사용자 요청으로 대사 외 문자열을 검수기에 포함했다.
 기준 ISO와 통합 테스트 이미지는 [current.md](current.md)의 것을 유지한다.
 

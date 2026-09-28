@@ -2,6 +2,20 @@
 
 기준일: 2026-09-28. 기록 ID: `recovery-001`, 후속 `dg-boundaries-001`, `dg-runtime-001`, `font-expand-001`, `translation-review-001`, `dg-expand-001`, `spacing-003`, `name-entry-001`. 
 
+**최신 재삽입 작업 (`catalog-insert-001`):** 대사 외 506개 카탈로그를 `dg_expand.py`의
+`--catalog-edits`로 통합했다. 지명·아이템 설명은 원래 길이와 무관한 개별 CD record,
+아이템·디지몬명은 원래 이름 필드 안에서 바이트 성장을 지원한다. 일반 공백은 byte-NUL을
+깨지 않는 `0F01`/정확한 6px다. **이름의 20-byte 필드 초과(10글자+NUL)는 아직 거부**하며,
+레코드 재배치·모든 UI 소비자 검증은 미완료다. 기준 번역과 `name-entry-252` 이미지는 유지한다.
+QA `catalog-qa-002`와 한계 크기 시험 `catalog-stress-003`은 합성 문구를 넣은 별도 이미지다.
+각 506개 표시/308개 DG 이름 복사 CPU·픽셀 검증, Python 84개, QA의 4,421개 대사 bank 및
+2,480개 glyph 회귀를 통과했다. CD/GPU/BIOS stub과 실제 게임 증거는 구분한다.
+사용자의 검증 중단 요청으로 실제 게임 검증을 멈추고 입력 해제·브레이크포인트 제거·일시정지했다.
+콜드 부팅, 메뉴, 첫 대사·선택지, 두 이름 입력/재표시, 마을 도입부와 helper/descriptor RAM 일치를
+확인했다. 새 카탈로그 CD 문자열의 실제 화면과 전체 UI 회귀는 미확인이다.
+기존 아이템 121의 `9860`은 공급되지 않은 코드임을 확인했으며 미변경 원형 보존과
+새 편집 시 오류를 구분한다. 사용법·주소·해시·남은 조건: [catalog-reinsertion.md](catalog-reinsertion.md).
+
 ## 사용자 목표와 완료 조건
 
 사용자는 기존 한국어패치판을 기반으로 (1) 부족한 폰트 확장, (2) 주인공과 디지몬 이름의

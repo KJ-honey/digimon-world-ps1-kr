@@ -6,6 +6,9 @@
 
 ## 사용법
 
+지명·아이템·디지몬명/설명은 `--catalog-edits`로 같은 이미지에 합친다.
+별도 인코딩과 길이 조건은 [catalog-reinsertion.md](catalog-reinsertion.md)에 있다.
+
 ```sh
 python3 tools/dg_export.py --id dg-text-0059c0 --output work/dg/my-edits.json
 # text만 편집한다. 원문 bytes/hash와 ID는 유지한다.

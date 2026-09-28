@@ -52,7 +52,15 @@ def bios_strings(consumer):
 def verify(build_dir):
     report = json.loads((build_dir/'build.json').read_text())
     source = read_source('kor')
-    original = Consumer(source['SLPS_017.97'])
+    # Compare the old DG consumer against the same current inline name data.
+    # Catalog edits legitimately change dynamic substitutions in both oracles.
+    oracle_exe=bytearray(source['SLPS_017.97'])
+    if report.get('catalog'):
+        for entry in report['catalog']['entries']:
+            if entry['policy']=='inline-field':
+                at=entry['source_logical_offset'];raw=bytes.fromhex(entry['expanded_hex'])
+                oracle_exe[at:at+len(raw)]=raw
+    original = Consumer(bytes(oracle_exe))
     original_bios=bios_strings(original)
     following=[0,0xfe]
     def source_lookahead(cpu,address,size,user):

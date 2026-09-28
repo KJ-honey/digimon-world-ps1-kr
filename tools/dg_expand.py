@@ -156,7 +156,7 @@ def prepare_bank(data, parsed, edits, codec):
     return bytes(changed), records, entries
 
 
-def compile_bank(exe, bank_offset, output):
+def compile_bank(exe, bank_offset, output, catalog_bank_offset=None):
     if exe[HOOK:HOOK+8] != HOOK_BEFORE:
         raise ValueError('Text consumer hook revision mismatch')
     output.mkdir(parents=True)
@@ -170,6 +170,19 @@ def compile_bank(exe, bank_offset, output):
     code = assemble(source(), output, 'bank')
     if len(code) != len(initial) or len(code) > BLOCK:
         raise ValueError('Bank helper code budget mismatch')
+    if catalog_bank_offset is not None:
+        from catalog_insert import HELPER_OFFSET
+        if len(code)>HELPER_OFFSET:
+            raise ValueError('DG/catalog helper overlap')
+        suffix=(f'.equ CATALOG_BANK_HI, {catalog_bank_offset>>16}\n'
+                f'.equ CATALOG_BANK_LO, {catalog_bank_offset&65535}\n'
+                f'.org {HELPER_OFFSET}\n'+(ROOT/'tools/catalog_bank.s').read_text())
+        combined=assemble(source()+suffix,output,'bank-catalog')
+        if combined[:len(code)]!=code or len(combined)>BLOCK:
+            raise ValueError('Catalog helper composition differs/overflows')
+        code=combined
+        from catalog_insert import verify_machine_code
+        verify_machine_code(code,CODE_RAM,output/'catalog-addressed.asm')
     # An absolute J stays in the same 256 MiB region; this fixed instruction
     # is independently decoded by Capstone and checked against its target.
     from capstone import Cs, CS_ARCH_MIPS, CS_MODE_MIPS32, CS_MODE_LITTLE_ENDIAN
@@ -257,8 +270,9 @@ def image_plan(disc, table, writes, dg):
     return plan, dict(table['SCN/DG.SCN'],lba=start,size=len(dg)), updates
 
 
-def build(edits_path, output, expand_font=False, name_entry=False):
+def build(edits_path, output, expand_font=False, name_entry=False, catalog_edits=None):
     if name_entry and not expand_font: raise ValueError("--name-entry requires --expand-font")
+    if catalog_edits and not expand_font: raise ValueError('--catalog-edits requires --expand-font')
     if output.exists() or not output.resolve().is_relative_to((ROOT/'work').resolve()):
         raise ValueError('Choose a new output directory under work/')
     manifest = json.loads(edits_path.read_text())
@@ -280,6 +294,13 @@ def build(edits_path, output, expand_font=False, name_entry=False):
         if sha(map_path.read_bytes())!=manifest['character_map_sha256']:
             raise ValueError('Character map changed; re-export')
         mapping = json.loads(map_path.read_text())
+        catalog_baseline = catalog_manifest = None
+        if catalog_edits:
+            from dg_analyze import read_source
+            from translation_catalog import extract
+            catalog_baseline=extract({'kor':exe,'jpn':read_source('jpn')['SLPS_017.97']},
+                                     mapping,sha(map_path.read_bytes()))
+            catalog_manifest=json.loads(catalog_edits.read_text())
         writes, font_report, pixel_report = [], None, None
         if expand_font:
             mapping,font_writes,font_report = compile_font(exe,mapping,output/'font', name_entry=name_entry)
@@ -294,20 +315,31 @@ def build(edits_path, output, expand_font=False, name_entry=False):
         codec = dialogue_codec(mapping)
         parsed = decode(data)
         changed,records,entries = prepare_bank(data,parsed,manifest['edits'],codec)
+        catalog_records, descriptors, catalog_report = [], bytes(BLOCK), None
+        if catalog_edits:
+            from catalog_insert import prepare, compile_renderer, HELPER_OFFSET
+            catalog_writes,catalog_records,descriptors,catalog_report=prepare(
+                exe,catalog_baseline,catalog_manifest,mapping)
+            writes.extend(catalog_writes)
+            if catalog_report['changed']:
+                writes.append(compile_renderer(exe,CODE_RAM+HELPER_OFFSET,output/'catalog'))
         if not expand_font:
             for entry in entries:
                 payload = bytes.fromhex(entry['expanded_hex'])
                 if any(is_half_space(t,codec) for t in text_tokens(payload,0,len(payload))[1]):
                     raise ValueError('Exact DG half spaces require --expand-font (pixel row renderer)')
-        if not entries:
+        if not entries and not (catalog_report and catalog_report['changed']):
             raise ValueError('No changed text; use dg_build.py for byte-identical no-op builds')
         bank_offset = len(data)+SHIFT
-        code,hook = compile_bank(exe,bank_offset,output/'bank')
+        catalog_offset=bank_offset+len(records)*BLOCK
+        has_catalog=bool(catalog_report and catalog_report['changed'])
+        code,hook = compile_bank(exe,bank_offset,output/'bank',catalog_offset if has_catalog else None)
         header = bytearray(data[:0x800])
         bounds = [s['base'] for s in parsed['scripts']] + [len(data)]
         struct.pack_into('<226I',header,0,*(b+SHIFT for b in bounds))
-        expanded_dg = bytes(header)+code.ljust(BLOCK,b'\0')+bytes(2*BLOCK)+changed[0x800:]+b''.join(records)
-        if expanded_dg[bank_offset:]!=b''.join(records):
+        expanded_dg = (bytes(header)+code.ljust(BLOCK,b'\0')+bytes(BLOCK)+descriptors+
+                       changed[0x800:]+b''.join(records+catalog_records))
+        if expanded_dg[bank_offset:]!=b''.join(records+catalog_records):
             raise ValueError('Bank layout mismatch')
         for e in entries:
             if e['script']==0:
@@ -316,8 +348,11 @@ def build(edits_path, output, expand_font=False, name_entry=False):
                     raise ValueError('Descriptor outside MAPHEAD')
                 writes.append({'id':e['id']+'-descriptor','file':'SCN/MAPHEAD.SCN','file_offset':at,
                                'before':mirror[at:at+4].hex(), 'after':changed[at+0x800:at+0x804].hex()})
-        writes.extend([hook,{'id':'alignment-repair','file':'SLPS_017.97','file_offset':OFFSET,
-                             'before':BEFORE.hex(),'after':AFTER.hex()}])
+        writes.append(hook)
+        # The catalog renderer contains byte loads and owns this whole function.
+        if not has_catalog:
+            writes.append({'id':'alignment-repair','file':'SLPS_017.97','file_offset':OFFSET,
+                           'before':BEFORE.hex(),'after':AFTER.hex()})
         plan,new_extent,metadata = image_plan(disc,table,writes,expanded_dg)
         target_count = new_extent['lba']+len(expanded_dg)//BLOCK
         image = output/'dg-expanded.iso'
@@ -347,6 +382,11 @@ def build(edits_path, output, expand_font=False, name_entry=False):
                 ff=table[filename]
                 if final.read(ff['lba'],ff['size'])!=expected:
                     raise ValueError('Final re-extraction differs: '+filename)
+            if catalog_report:
+                from catalog_insert import verify_reinsertion
+                ff=table['SLPS_017.97']
+                verify_reinsertion(final.read(ff['lba'],ff['size']),expanded_dg,catalog_offset,
+                                   catalog_report,catalog_baseline,exe)
             result_hash = sha(final.raw)
         finally:
             final.close()
@@ -356,6 +396,7 @@ def build(edits_path, output, expand_font=False, name_entry=False):
                   'bank_offset':bank_offset,'code_ram':CODE_RAM,'scratch_ram':SCRATCH_RAM,
                   'script_file_offset_shift':SHIFT,'script_ram_offsets_unchanged':True,
                   'entries':entries,'writes':writes,'new_dg_extent':new_extent,
+                  'catalog':dict(catalog_report,bank_file_offset=catalog_offset) if catalog_report else None,
                   'name_entry':name_report if name_entry else None,
                   'font_expansion':font_report,'metadata_writes':[
                       {'lba':l,'payload_offset':a,'after':v.hex()} for l,a,v in metadata],
@@ -374,6 +415,8 @@ def build(edits_path, output, expand_font=False, name_entry=False):
                                  'full native/overlay caller and streaming regression pending']}
         write_json(output/'build.json',report)
         write_json(output/'edits.json',manifest)
+        if catalog_manifest:
+            write_json(output/'catalog-edits.json',catalog_manifest)
         (output/'dg-expanded.cue').write_text('FILE "dg-expanded.iso" BINARY\n  TRACK 01 MODE2/2352\n    INDEX 01 00:00:00\n')
         return {k:v for k,v in report.items() if k not in ('entries','writes','font_expansion')}
     finally:
@@ -386,5 +429,6 @@ if __name__=='__main__':
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--expand-font',action='store_true')
     p.add_argument('--name-entry',action='store_true')
+    p.add_argument('--catalog-edits',type=Path,help='Non-DG source-bound edit manifest')
     a=p.parse_args()
-    print(json.dumps(build(a.edits,a.output,a.expand_font,a.name_entry),ensure_ascii=False,indent=2))
+    print(json.dumps(build(a.edits,a.output,a.expand_font,a.name_entry,a.catalog_edits),ensure_ascii=False,indent=2))
