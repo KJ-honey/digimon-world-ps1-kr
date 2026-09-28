@@ -129,6 +129,9 @@ class Workspace:
             raise ValueError('번역문이 비어 있거나 비정상적으로 큽니다.')
         if status not in STATES:
             raise ValueError('Unknown wording state')
+        if row.get('text_format') == 'nul_glyph_string':
+            if any(c in text for c in '\r\n\t') or re.search(r'⟦[0-9A-F]{4,8}⟧', text):
+                raise ValueError('명칭·설명은 한 줄 문자열입니다. DG 제어코드와 줄바꿈을 넣을 수 없습니다.')
         controls = lambda s: re.findall(r'⟦[0-9A-F]{4,8}⟧', s)
         glyphs = lambda s: re.findall(r'⟦G:[0-9A-F]{4}⟧', s)
         restored_source_controls = (controls(row['source']) != controls(row['existing'])
@@ -204,6 +207,45 @@ class Workspace:
                                        if (self.directory/name).exists()}}
 
 
+class ReviewWorkspace:
+    """UI aggregation only; DG builders continue to use the original Workspace.
+
+    Each source family keeps its own baseline identity, lock and review history.
+    """
+    validate = staticmethod(Workspace.validate)
+
+    def __init__(self, directory):
+        self.directory = directory
+        self.workspaces = [Workspace(directory)]
+        if (directory / 'catalog' / 'baseline.json').exists():
+            self.workspaces.append(Workspace(directory / 'catalog'))
+        self.owners = {}
+        entries = []
+        for workspace in self.workspaces:
+            for key, row in workspace.rows.items():
+                if key in self.owners:
+                    raise ValueError('Duplicate catalog ID')
+                self.owners[key] = workspace
+                entries.append(row)
+        self.rows = {r['id']: r for r in entries}
+        self.baseline = dict(format=1, entries=entries,
+                             scope={'families': [w.baseline.get('scope', {}) for w in self.workspaces],
+                                    'complete_game_extraction': False})
+
+    def load(self):
+        entries = {}
+        for workspace in self.workspaces:
+            entries.update(workspace.load()['entries'])
+        return {'entries': entries}
+
+    def save(self, payload, author='human'):
+        return self.owners[payload['id']].save(payload, author)
+
+    def export(self):
+        return dict(format=2, purpose='wording review backup; not product input',
+                    families=[w.export() for w in self.workspaces])
+
+
 def handler_for(workspace):
     csrf = secrets.token_urlsafe(32)
 
@@ -262,7 +304,7 @@ def handler_for(workspace):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['prepare', 'serve', 'import', 'report'])
+    parser.add_argument('command', choices=['prepare', 'prepare-catalog', 'serve', 'import', 'report'])
     parser.add_argument('--directory', type=Path, default=WORK)
     parser.add_argument('--port', type=int, default=8770)
     parser.add_argument('--open', action='store_true')
@@ -270,10 +312,13 @@ def main():
     args = parser.parse_args()
     if not args.directory.resolve().is_relative_to((ROOT / 'work').resolve()):
         parser.error('Workspace must stay under work/')
-    if args.command == 'prepare':
-        prepare(args.directory)
+    if args.command in {'prepare', 'prepare-catalog'}:
+        if args.command == 'prepare':
+            prepare(args.directory)
+        from translation_catalog import prepare as prepare_catalog
+        prepare_catalog(args.directory / 'catalog')
         return
-    workspace = Workspace(args.directory)
+    workspace = ReviewWorkspace(args.directory)
     if args.command == 'import':
         # Authored per-unit drafts only: this command has no prose transformation rule.
         rows = json.loads(args.input.read_text())

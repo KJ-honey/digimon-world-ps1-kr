@@ -26,3 +26,15 @@ test('all local baseline strings and authored drafts roundtrip exactly', {
   const reviews = JSON.parse(fs.readFileSync(path.join(workspace, 'reviews.json')));
   for (const [id, row] of Object.entries(reviews.entries)) assert.equal(roundtrip(row.text), row.text, id);
 });
+
+const catalogRoundtrip = new Function('text', definitions +
+  "const row={text_format:'nul_glyph_string'}; return fromEditor(editorText(text,row),row);");
+test('catalog editor never adds DG terminators or rewrites spaces', () => {
+  for (const text of ['시작의　마을', '회복 플로피', '초⟦G:9860⟧꽃 열매'])
+    assert.equal(catalogRoundtrip(text), text);
+  const file = path.join(workspace, 'catalog/baseline.json');
+  if (fs.existsSync(file)) {
+    for (const row of JSON.parse(fs.readFileSync(file)).entries)
+      for (const value of [row.source, row.existing]) assert.equal(catalogRoundtrip(value), value, row.id);
+  }
+});
