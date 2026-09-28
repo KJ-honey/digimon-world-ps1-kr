@@ -257,7 +257,8 @@ def image_plan(disc, table, writes, dg):
     return plan, dict(table['SCN/DG.SCN'],lba=start,size=len(dg)), updates
 
 
-def build(edits_path, output, expand_font=False):
+def build(edits_path, output, expand_font=False, name_entry=False):
+    if name_entry and not expand_font: raise ValueError("--name-entry requires --expand-font")
     if output.exists() or not output.resolve().is_relative_to((ROOT/'work').resolve()):
         raise ValueError('Choose a new output directory under work/')
     manifest = json.loads(edits_path.read_text())
@@ -281,8 +282,13 @@ def build(edits_path, output, expand_font=False):
         mapping = json.loads(map_path.read_text())
         writes, font_report, pixel_report = [], None, None
         if expand_font:
-            mapping,font_writes,font_report = compile_font(exe,mapping,output/'font')
+            mapping,font_writes,font_report = compile_font(exe,mapping,output/'font', name_entry=name_entry)
             pixel_writes,pixel_report = compile_pixel_row(exe,font_writes,font_report,output/'pixel-row')
+            name_report = None
+            if name_entry:
+                from name_entry import compile_names
+                name_writes,name_report=compile_names(read('SHOP_REL.BIN'),mapping,font_writes,font_report,pixel_report,output/'name')
+                writes.extend(name_writes)
             writes.extend(font_writes)
             writes.extend(pixel_writes)
         codec = dialogue_codec(mapping)
@@ -332,6 +338,15 @@ def build(edits_path, output, expand_font=False):
             mf = table['SCN/MAPHEAD.SCN']
             if final.read(mf['lba'],mf['size'])!=changed[0x800:0x800+len(mirror)]:
                 raise ValueError('Final MAPHEAD differs')
+            for filename in sorted({w['file'] for w in writes}):
+                expected=bytearray(read(filename))
+                for w in writes:
+                    if w['file']==filename:
+                        pos=w['file_offset'];value=bytes.fromhex(w['after'])
+                        expected[pos:pos+len(value)]=value
+                ff=table[filename]
+                if final.read(ff['lba'],ff['size'])!=expected:
+                    raise ValueError('Final re-extraction differs: '+filename)
             result_hash = sha(final.raw)
         finally:
             final.close()
@@ -341,6 +356,7 @@ def build(edits_path, output, expand_font=False):
                   'bank_offset':bank_offset,'code_ram':CODE_RAM,'scratch_ram':SCRATCH_RAM,
                   'script_file_offset_shift':SHIFT,'script_ram_offsets_unchanged':True,
                   'entries':entries,'writes':writes,'new_dg_extent':new_extent,
+                  'name_entry':name_report if name_entry else None,
                   'font_expansion':font_report,'metadata_writes':[
                       {'lba':l,'payload_offset':a,'after':v.hex()} for l,a,v in metadata],
                   'appended_sector_count':target_count-len(disc.raw)//2352,
@@ -369,5 +385,6 @@ if __name__=='__main__':
     p.add_argument('--edits',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--expand-font',action='store_true')
+    p.add_argument('--name-entry',action='store_true')
     a=p.parse_args()
-    print(json.dumps(build(a.edits,a.output,a.expand_font),ensure_ascii=False,indent=2))
+    print(json.dumps(build(a.edits,a.output,a.expand_font,a.name_entry),ensure_ascii=False,indent=2))

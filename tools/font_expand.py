@@ -154,7 +154,7 @@ def assemble(source, out, name):
     lines = []
     for ins in decoded:
         operands = ins.op_str
-        if ins.mnemonic in ('b', 'beq', 'beqz', 'bne', 'bnez'):
+        if ins.mnemonic in ('b', 'beq', 'beqz', 'bne', 'bnez', 'bgez', 'bltz', 'blez', 'bgtz'):
             target = ins.operands[-1].imm
             parts = operands.rsplit(',', 1)
             operands = (parts[0]+', ' if len(parts)>1 else '')+f'L{target:08x}'
@@ -169,7 +169,7 @@ def assemble(source, out, name):
     return data
 
 
-def compile_font(exe, mapping, output, font_path=DEFAULT_FONT):
+def compile_font(exe, mapping, output, font_path=DEFAULT_FONT, name_entry=False):
     output.mkdir(parents=True, exist_ok=True)
     if exe[HOOK:HOOK+16] != HOOK_BEFORE:
         raise ValueError('Font hook revision mismatch')
@@ -184,22 +184,23 @@ def compile_font(exe, mapping, output, font_path=DEFAULT_FONT):
     additions = sorted(required-old)
     if sha(font_path.read_bytes()) != FONT_SHA256:
         raise ValueError('Mona12 font source changed; review a new profile first')
+    jamo = list(chr(c) for c in range(0x3131,0x3164)) if name_entry else []
     from fontTools.ttLib import TTFont
     with TTFont(font_path, fontNumber=0) as source_font:
         cmap = source_font.getBestCmap()
-        missing = sorted(c for c in required if ord(c) not in cmap)
+        missing = sorted(c for c in required | set(jamo) if ord(c) not in cmap)
         if missing:
             raise ValueError('Font has no glyphs: '+''.join(missing))
     bitmap = ImageFont.truetype(str(font_path), 12, index=0)
     # Glyph identities still come from restore_text's Gulim comparison. The
     # selected product raster is independently bound to the Mona12 source.
-    rendered = {char: checked_rows(bitmap, char) for char in sorted(required)}
+    rendered = {char: checked_rows(bitmap, char) for char in sorted(required) + jamo}
     rows = [struct.unpack_from('<11H', exe, START+22*i) for i in range(992)]
     legacy_hangul = [e for e in entries if e['character'] in old]
     for e in legacy_hangul:
         rows[e['index']] = rendered[e['character']]
     new_entries = []
-    for i, char in enumerate(additions):
+    for i, char in enumerate(additions + jamo):
         rows.append(rendered[char])
         new_entries.append({'id': f'expanded-{ord(char):04x}', 'index': 992+i,
                             'code': extra_code(i), 'character': char, 'evidence': 'mona12_12px_raster'})
@@ -214,7 +215,7 @@ def compile_font(exe, mapping, output, font_path=DEFAULT_FONT):
         d['offset'] = offset
         desc_bytes.extend(struct.pack('<5I', base+offset, (1<<d['bits'])-1, d['bits'], d['rows'], d['stride']))
         offset += len(t)
-    definitions = {'EXTRA_COUNT': len(additions)}
+    definitions = {'EXTRA_COUNT': len(additions) + len(jamo)}
     for key, addr in {'INDEX':base+INDEX_OFFSET, 'SCRATCH':base+SCRATCH_OFFSET,
                       'DESCRIPTORS':base+DESCRIPTORS_OFFSET}.items():
         definitions[key+'_HI'], definitions[key+'_LO'] = addr>>16, addr&65535
@@ -255,7 +256,7 @@ def compile_font(exe, mapping, output, font_path=DEFAULT_FONT):
     result_map = dict(mapping, entries=entries+new_entries, font_profile=FONT_PROFILE)
     write_json(output/'character-map.json', result_map)
     report = {'profile':FONT_PROFILE, 'hangul_before':len(old),
-              'hangul_total':len(required), 'hangul_added':len(additions),
+              'hangul_total':len(required), 'hangul_added':len(additions), 'name_jamo':len(jamo),
               'legacy_slots_preserved':991-len(legacy_hangul), 'fallback_preserved':True,
               'legacy_hangul_slots_rerendered':len(legacy_hangul),
               'font_name':'Mona12 Text KR', 'font_size_px':12, 'font_face':0,

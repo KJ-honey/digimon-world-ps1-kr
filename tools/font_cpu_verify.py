@@ -13,7 +13,9 @@ from survey import Disc, ROOT, sha, write_json
 
 
 def verify(build_dir):
-    disc=Disc(build_dir/'dg-dev.iso')
+    image=build_dir/'dg-dev.iso'
+    if not image.exists():image=build_dir/'dg-expanded.iso'
+    disc=Disc(image)
     try:
         ef=disc.files()['SLPS_017.97']; exe=disc.read(ef['lba'],ef['size']); digest=sha(disc.raw)
     finally: disc.close()
