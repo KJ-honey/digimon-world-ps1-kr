@@ -6,7 +6,14 @@
 *.img
 *.ppf
 *.xdelta
-work/
+work/*
+!work/translation/
+work/translation/*
+# Authored translation decisions and their revision history are source files.
+# Extracted baselines, binary assets, build outputs and QA snapshots stay ignored.
+!work/translation/reviews.json
+!work/translation/style-decisions.json
+!work/translation/issues.json
 .venv/
 __pycache__/
 .DS_Store

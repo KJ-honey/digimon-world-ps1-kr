@@ -1,0 +1,241 @@
+{
+  "format": 1,
+  "scope": "this title and source hashes from baseline.json",
+  "user_approved": [
+    {
+      "id": "style-001",
+      "rule": "일본어 말투 반영; 존댓말과 반말 구분; 한국어 띄어쓰기 복원",
+      "evidence": "2026-09-27 사용자 요청"
+    },
+    {
+      "id": "length-001",
+      "rule": "번역 초안에 원문 바이트 길이 상한을 적용하지 않음; 이번 세션은 번역 및 검수 도구만",
+      "evidence": "2026-09-27 사용자 요청"
+    },
+    {
+      "id": "voice-daka-001",
+      "rule": "だか/オラ/だよ 계열 해당 화자의 말투는 노인 말투가 아니라 천진난만하고 순박한 느낌으로 옮긴다. 일반 접속사 だから나 타 화자의 わし/じゃ와 혼동하지 않는다.",
+      "evidence": "2026-09-28 사용자: \"だか\" 말투는 할배 말투와 다르고 천진난만한 느낌에 가깝다.",
+      "scope": "script 0 해당 상점/교환, script 121·122 모털몬, script 162 관련 상점 및 같은 말투가 확인되는 문맥. 운석몬 ダス의 별도 제안과 구분."
+    }
+  ],
+  "proposals": [
+    {
+      "id": "voice-jijimon-001",
+      "source": "ジジモン わし/おぬし/じゃ/のう",
+      "output": "기존 이름 할배몬; 하게체와 노인 말투",
+      "status": "needs_human_review",
+      "scope": "script 0·150·201·205·210·223 등 할배몬으로 확인된 문맥"
+    },
+    {
+      "id": "voice-piyo-001",
+      "source": "ピヨ",
+      "output": "문장별 존비어를 따르며 피요 말버릇 유지",
+      "status": "needs_human_review",
+      "scope": "script 0 접객 문장"
+    },
+    {
+      "id": "voice-aru-001",
+      "source": "アル/よろし",
+      "output": "~다 해 / ~냐 해",
+      "status": "needs_human_review",
+      "scope": "script 0 해당 상점, 119·179 카드 상점, 202 신문 인용. 화자와 인용 출처 확인 범위"
+    },
+    {
+      "id": "voice-heko-001",
+      "source": "へこへこ",
+      "output": "헤코헤코",
+      "status": "needs_human_review",
+      "scope": "script 0·162 상점과 192 워메몬 영입"
+    },
+    {
+      "id": "term-heavy-strawberry-001",
+      "source": "ヘビーいちご",
+      "output": "헤비 딸기",
+      "status": "needs_human_review",
+      "scope": "dg-text-06318a; 기존 뱀 딸기와 구분 제안"
+    },
+    {
+      "id": "term-canyon-001",
+      "source": "グレートキャニオン",
+      "output": "그레이트 캐니언",
+      "status": "needs_human_review",
+      "scope": "이번 마을 대사 초안; 전체 용어 승인 아님"
+    },
+    {
+      "id": "term-seaside-cave-001",
+      "source": "海岸洞くつ/ひみつの海岸洞",
+      "output": "해안 동굴 / 비밀 해안 동굴",
+      "status": "needs_human_review",
+      "scope": "script 147 운송 선택지; 기존 해저 동굴과 구분"
+    },
+    {
+      "id": "voice-iga-001",
+      "source": "セッチャ/でち/デチ",
+      "output": "소인/하오체와 합니당·지용의 어린 발음 혼합",
+      "scope": "script 9 닌자몬 영입, script 162 아이템 안내",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "voice-bake-001",
+      "source": "バケ/バケバケ",
+      "output": "고스/고스고스",
+      "scope": "script 33 문답, script 61 고스몬 외침. 기존 이름 고스몬에 대응",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "pun-shiira-001",
+      "source": "めずらシーラ",
+      "output": "이런 일도 있씨라",
+      "scope": "dg-text-0095f4 씨라몬 이름 말장난",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "puzzle-grave-001",
+      "source": "バカから点をとったところにもどれ",
+      "output": "무덤덤에서 덤 하나를 뺀 곳으로 돌아가라",
+      "scope": "dg-text-0260f6, dg-text-0261cc; バカ 탁점 제거→ハカ(墓). 답을 무덤으로 보존하는 한국어 글자놀이. 진행 단서 사용자 검수 필요",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "term-mansion-key-001",
+      "source": "館のカギ",
+      "output": "저택 열쇠",
+      "scope": "script 49–53. 기존 관의 열쇠/저택열쇠 불일치 통일 제안",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "term-offering-sake-001",
+      "source": "お供え酒",
+      "output": "제사용 술",
+      "scope": "dg-text-00a8e2, dg-text-00a964. 기존 맛있는 술의 의미 수정 제안",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "voice-dasu-001",
+      "source": "オラ/ダス",
+      "output": "~다구/~자구의 순박한 말버릇",
+      "scope": "script 79 운석몬. 태어난 지 얼마 안 되었다는 문맥; 노인 말투 초안을 다시 고치고 이력 보존. 사용자 だか 원칙을 별개 어미의 확정 번역으로 오인하지 않음",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "voice-kansai-001",
+      "source": "もらいまっせ/来はりましたん/おくんなはれ",
+      "output": "받아 가겠습니더/오셨습니꺼/비켜 주이소",
+      "scope": "script 77 적 전투 대사의 존대 방언 제안",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "voice-maro-001",
+      "source": "まろ/おじゃる",
+      "output": "이 몸/~노라/~거라",
+      "scope": "script 139·141·142의 귀족풍 자칭과 어미; 나이를 확정한 말투 아님",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "voice-toko-001",
+      "source": "でしゅ",
+      "output": "이써요/주셰요 등 제한적 어린 발음",
+      "scope": "script 151·163; 205·210에서 보통말인 대사까지 강제로 확장하지 않음",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "terms-stats-001",
+      "source": "かしこさ/すばやさ/しつけ/ごきげん",
+      "output": "지력/스피드/예절/기분",
+      "scope": "훈련·진화·메뉴 초안. 실제 게임의 다른 모듈 표시와 통일하는 작업은 후속",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "terms-tournaments-001",
+      "source": "王者/氷水/超機械",
+      "output": "최강자 또는 챔피언/얼음·물/초기계",
+      "scope": "script 98·153·179·220 동일 대회 설명. 왕자·빙수의 모호함과 초고성능이라는 첨가 제거",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "term-meat-001",
+      "source": "巨大肉/極上肉",
+      "output": "거대 고기/극상 고기",
+      "scope": "DG 농장과 격투장 보상에서 띄어쓰기 일치. 다른 모듈 아이템 라벨은 미반영",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "term-claw-001",
+      "source": "灰色の爪",
+      "output": "잿빛 발톱",
+      "scope": "0702ce·09e5f2. 회색 손톱/잿빛 손톱의 동일 아이템 명칭 제안",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "term-warumo-001",
+      "source": "ワルモンザエモン",
+      "output": "배드퍼펫몬",
+      "scope": "script 131·133·138·222. 나쁜퍼펫몬/배드퍼펫몬 중 기존 카드 이름과 일치",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "term-rewards-001",
+      "source": "ビートルダイヤ/ギザギザはさみ",
+      "output": "비틀 다이아/톱니 가위",
+      "scope": "03ff40·040084. 기존 비틀타이어 등의 오역 수정",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "term-otama-001",
+      "source": "オタマモン",
+      "output": "올챙몬",
+      "scope": "0538a0 원문의 이름을 복원; 0a6392 기존 카드 이름과 일치",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "pun-earlybird-001",
+      "source": "早起きは16文の得→3文",
+      "output": "일찍 일어나면 열여섯 푼을 번다→세 푼",
+      "scope": "0493d4·04940c. 틀린 속담의 숫자를 정정하는 농담을 보존한 번역. 추가 현지화 검수 필요",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "pun-helper-001",
+      "source": "助っ人→助っモン",
+      "output": "도우미→도우몬",
+      "scope": "090e32. 워메몬의 말장난 제안",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "setting-language-001",
+      "source": "日本語",
+      "output": "일본어",
+      "scope": "082e38. 원문에 명시된 언어를 보존; 한국어로 임의 변경하지 않음",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "terms-restaurant-001",
+      "source": "各料理メニュー",
+      "output": "붉은 열기 라면/버닝 카레/용암풍 전골/쥐라기 버거/미확인 비행 수프/수수께끼의 달걀말이 등",
+      "scope": "script 184·185. 가격·회복량·능력치 수치는 원문 유지. 길어진 요리명은 게임 레이아웃 미검증",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "terms-farming-001",
+      "source": "挑戦ニンジン/サクラ鳥大根",
+      "output": "훈련 효과 당근/훈련 효과 무",
+      "scope": "0819a8. 기존 기능 중심 이름 유지 제안; 다른 모듈 아이템 라벨과 후속 통일 필요",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "debug-labels-001",
+      "source": "グレート/性質/通⟦G:8E5A⟧",
+      "output": "그레이드/속성/통산",
+      "scope": "script 0 남은 라벨. 대회 문맥 추론이며 通 뒤 미확정 원문 글리프를 해독 완료로 간주하지 않음",
+      "status": "needs_human_review"
+    },
+    {
+      "id": "term-carddass-001",
+      "source": "カードダス",
+      "output": "카드다스",
+      "scope": "script 222. 기존 카드놀이라는 번역을 카드 자판기 명칭으로 수정",
+      "status": "needs_human_review"
+    }
+  ]
+}

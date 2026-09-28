@@ -1,0 +1,261 @@
+{
+  "format": 1,
+  "baseline_sha256": "b077db5aa18d6375aadfe322c05a8ca25501db7faa5d103ce420dcc54c2d9d93",
+  "issues": [
+    {
+      "id": "dg-text-01e28e",
+      "kind": "original_translation_control_difference",
+      "source_controls": [
+        "⟦0107⟧",
+        "⟦0101⟧",
+        "⟦0D00⟧",
+        "⟦0D00⟧"
+      ],
+      "existing_controls": [
+        "⟦0D00⟧",
+        "⟦0D00⟧"
+      ],
+      "status": "needs_engine_review",
+      "wording_blocks_build": true,
+      "draft_restored": true,
+      "game_applied": false,
+      "source_token_stream_restored": true
+    },
+    {
+      "id": "dg-text-01e2d0",
+      "kind": "original_translation_control_difference",
+      "source_controls": [
+        "⟦0107⟧",
+        "⟦0101⟧",
+        "⟦0D00⟧",
+        "⟦0D00⟧",
+        "⟦0D00⟧"
+      ],
+      "existing_controls": [
+        "⟦0D00⟧",
+        "⟦0D00⟧",
+        "⟦0D00⟧"
+      ],
+      "status": "needs_engine_review",
+      "wording_blocks_build": true,
+      "draft_restored": true,
+      "game_applied": false,
+      "source_token_stream_restored": true
+    },
+    {
+      "id": "dg-text-036110",
+      "kind": "original_translation_control_difference",
+      "source_controls": [
+        "⟦0107⟧",
+        "⟦0101⟧",
+        "⟦0D00⟧",
+        "⟦0D00⟧"
+      ],
+      "existing_controls": [
+        "⟦0D00⟧",
+        "⟦0D00⟧"
+      ],
+      "status": "needs_engine_review",
+      "wording_blocks_build": true,
+      "draft_restored": true,
+      "source_token_stream_restored": true,
+      "game_applied": false
+    },
+    {
+      "id": "dg-text-036192",
+      "kind": "original_translation_control_difference",
+      "source_controls": [
+        "⟦0107⟧",
+        "⟦0101⟧",
+        "⟦0D00⟧",
+        "⟦0D00⟧"
+      ],
+      "existing_controls": [
+        "⟦0D00⟧",
+        "⟦0D00⟧"
+      ],
+      "status": "needs_engine_review",
+      "wording_blocks_build": true,
+      "draft_restored": true,
+      "source_token_stream_restored": true,
+      "game_applied": false
+    },
+    {
+      "id": "dg-text-0365e8",
+      "kind": "original_translation_control_difference",
+      "source_controls": [
+        "⟦0107⟧",
+        "⟦0101⟧",
+        "⟦0D00⟧",
+        "⟦0D00⟧"
+      ],
+      "existing_controls": [
+        "⟦0D00⟧",
+        "⟦0D00⟧"
+      ],
+      "status": "needs_engine_review",
+      "wording_blocks_build": true,
+      "draft_restored": true,
+      "source_token_stream_restored": true,
+      "game_applied": false
+    },
+    {
+      "id": "dg-text-03e106",
+      "kind": "original_translation_control_difference",
+      "source_controls": [
+        "⟦0107⟧",
+        "⟦0101⟧",
+        "⟦0D00⟧",
+        "⟦0D00⟧",
+        "⟦0D00⟧"
+      ],
+      "existing_controls": [
+        "⟦0D00⟧",
+        "⟦0D00⟧",
+        "⟦0D00⟧"
+      ],
+      "status": "needs_engine_review",
+      "wording_blocks_build": true,
+      "draft_restored": true,
+      "source_token_stream_restored": true,
+      "game_applied": false
+    },
+    {
+      "id": "dg-text-063b2c",
+      "kind": "original_translation_control_difference",
+      "source_controls": [
+        "⟦0106⟧",
+        "⟦0500⟧",
+        "⟦0101⟧",
+        "⟦0D00⟧",
+        "⟦0D00⟧"
+      ],
+      "existing_controls": [
+        "⟦0D00⟧",
+        "⟦0D00⟧"
+      ],
+      "status": "needs_engine_review",
+      "wording_blocks_build": true,
+      "draft_restored": true,
+      "game_applied": false,
+      "source_token_stream_restored": true
+    },
+    {
+      "id": "dg-text-06f8a2",
+      "kind": "original_translation_control_difference",
+      "source_controls": [
+        "⟦0104⟧",
+        "⟦0101⟧",
+        "⟦0D00⟧",
+        "⟦0105⟧",
+        "⟦0101⟧",
+        "⟦0D00⟧",
+        "⟦0D00⟧"
+      ],
+      "existing_controls": [
+        "⟦0D00⟧",
+        "⟦0105⟧",
+        "⟦0101⟧",
+        "⟦0D00⟧",
+        "⟦0D00⟧"
+      ],
+      "status": "needs_engine_review",
+      "wording_blocks_build": true,
+      "draft_restored": true,
+      "source_token_stream_restored": true,
+      "game_applied": false
+    },
+    {
+      "id": "dg-text-096f02",
+      "kind": "original_translation_control_difference",
+      "source_controls": [
+        "⟦0D00⟧",
+        "⟦0106⟧",
+        "⟦0500⟧",
+        "⟦0101⟧",
+        "⟦0D00⟧",
+        "⟦0D00⟧"
+      ],
+      "existing_controls": [
+        "⟦0D00⟧",
+        "⟦0D00⟧",
+        "⟦0D00⟧"
+      ],
+      "status": "needs_engine_review",
+      "wording_blocks_build": true,
+      "draft_restored": true,
+      "source_token_stream_restored": true,
+      "game_applied": false
+    },
+    {
+      "id": "dg-text-0260f6",
+      "kind": "wording_context_review",
+      "detail": "수수께끼 현지화. 바카→하카의 탁점 조작을 무덤덤→무덤 글자 조작으로 재작성. 진행 단서 사용자 검수 필요.",
+      "status": "needs_human_review",
+      "wording_blocks_build": true
+    },
+    {
+      "id": "dg-text-0261cc",
+      "kind": "wording_context_review",
+      "detail": "같은 냉장고 메모의 재확인 문장. 같은 수수께끼 대안 검수 필요.",
+      "status": "needs_human_review",
+      "wording_blocks_build": true
+    },
+    {
+      "id": "dg-text-01f0e8",
+      "kind": "wording_context_review",
+      "detail": "상인 말투의 べんきょうしまっせ를 할인으로 해석한 초안. 전투 외침의 화자/소비 문맥에 따라 한 수 배움과 비교 필요.",
+      "status": "needs_human_review",
+      "wording_blocks_build": true
+    },
+    {
+      "id": "dg-text-09210c",
+      "kind": "wording_context_review",
+      "detail": "アトデウカガイマショウ의 伺う를 찾아뵙다로 제안. 방문/나중에 묻기 의미는 화자와 실행 분기에서 재확인.",
+      "status": "needs_human_review",
+      "wording_blocks_build": true
+    },
+    {
+      "id": "dg-text-08f11a",
+      "kind": "wording_context_review",
+      "detail": "ズッポシ 의성 표현은 쑥?으로 제안. 화면 동작과 화자 문맥 검수 필요.",
+      "status": "needs_human_review",
+      "wording_blocks_build": true
+    },
+    {
+      "id": "dg-text-005fe6",
+      "kind": "wording_context_review",
+      "detail": "グレート는 대회 등급 문맥에서 그레이드로 제안. 실행 화면에서 라벨 역할 재확인.",
+      "status": "needs_human_review",
+      "wording_blocks_build": true
+    },
+    {
+      "id": "dg-text-006028",
+      "kind": "wording_context_review",
+      "detail": "通 뒤 일본어 글리프 8E5A는 미확정. 기존 통산을 유지한 초안이며 새 해독 확정 아님.",
+      "status": "needs_human_review",
+      "wording_blocks_build": true
+    },
+    {
+      "id": "dg-text-0493d4",
+      "kind": "wording_context_review",
+      "detail": "16文 속담 말실수와 후속 3文 정정을 열여섯 푼/세 푼으로 보존. 한국어 농담의 자연스러움 검수.",
+      "status": "needs_human_review",
+      "wording_blocks_build": true
+    },
+    {
+      "id": "dg-text-04940c",
+      "kind": "wording_context_review",
+      "detail": "앞 문장의 틀린 속담 숫자를 세 푼으로 정정하는 농담. 짝 문장 0493d4와 함께 검수.",
+      "status": "needs_human_review",
+      "wording_blocks_build": true
+    },
+    {
+      "id": "dg-text-090e32",
+      "kind": "wording_context_review",
+      "detail": "助っ人/助っモン을 도우미/도우몬으로 제안. 말장난 검수.",
+      "status": "needs_human_review",
+      "wording_blocks_build": true
+    }
+  ]
+}
