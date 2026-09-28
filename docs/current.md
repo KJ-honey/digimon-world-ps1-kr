@@ -31,6 +31,11 @@
 
 ## 기준 입력과 보존
 
+최신 사용자 요청 테스트 이미지: `work/build/control-restorations-001/dg-expanded.cue`.
+2026-09-28, 공백·동적 명칭 10글자 상한·원문 제어 복원·줄 배치를 함께 반영했다.
+전체 4,617개 선택, 검사상 보류 0개. 이미지 무결성·재추출·4,421개 변경 대사의
+CPU 검증을 통과했다. 이 이미지 자체의 실제 게임 플레이는 아직 확인하지 않았다.
+
 | 입력 | SHA-256 |
 | --- | --- |
 | 일본어판 | `a99ce1cf5c3524b866603fe29f412c956131e7a2d48807e2508d9304ba6f20cd` |
@@ -569,6 +574,23 @@ ISO SHA-256: `cbfe77c24d3197dd24542dbeac89025009a6d524c21145ada37ef0c75cfa0946`.
 9개 CPU 출력 행·글자 위치와 6글자 이름 조건을 검사했다. BIOS/GPU stub 검사이며
 실제 게임 장면 검증은 아니다. ISO는 재생성하지 않았고 `spacing-003`은 이전 산출물이다.
 리뷰툴은 새 줄바꿈 규칙을 읽도록 같은 포트에서 재시작했다. [대조 기록](control-restorations.md).
+
+### 보류 해소 후 통합 테스트 빌드 (control-restorations-001)
+
+사용자 빌드 요청으로 현재 리뷰를 새로 내보내 원본 한국어 ISO에서 재생성했다.
+입력 snapshot: `work/translation-playtest/control-restorations-build-001/`.
+출력: `work/build/control-restorations-001/dg-expanded.iso` 및 `.cue`.
+ISO 크기 392,360,640 bytes, SHA-256
+`116d4926231659ce029d288a5940aad0d88002508deca0d08c592d13c7999f01`.
+
+4,617개 전부 선택되었고 실제 payload 변경 4,421개, 동일 196개, 보류 0개다.
+최종 sector 변경 계획·전체 diff·파일시스템·DG/MAPHEAD 재추출 검사를 통과했다.
+bank 소비자 CPU 검증은 변경 4,421개와 연속 대사 610개를 통과했고, continuation,
+출력·폭·대사창 상태·callee-saved·버퍼 경계를 확인했다. CD/BIOS는 stub이다.
+EXE 전체 bytes는 `spacing-003`과 동일하여 폰트·정확한 6px 렌더러 코드는 바뀌지 않았다.
+`verification.json`, `bank/cpu-verification.json`에 이 이미지에 연결된 결과가 있다.
+10글자 동적 명칭 상한은 사용자 지정이며 전수 실측이 아니다. 실제 게임 실행·해당
+9개 장면 및 전체 회귀·저장 검증은 이 새 이미지에서 수행하지 않았다.
 
 ### 이름 입력
 
