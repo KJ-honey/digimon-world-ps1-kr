@@ -278,7 +278,8 @@ def handler_for(workspace):
                 if self.path == '/':
                     self.respond(200, Path(__file__).with_name('translation_review.html').read_bytes(), 'text/html; charset=utf-8')
                 elif self.path == '/api/data':
-                    self.respond(200, {'baseline': workspace.baseline, 'reviews': workspace.load()['entries'], 'csrf': csrf})
+                    self.respond(200, {'baseline': workspace.baseline, 'reviews': workspace.load()['entries'],
+                                       'speakers': getattr(workspace, 'speakers', {}), 'csrf': csrf})
                 elif self.path == '/api/export':
                     self.respond(200, workspace.export())
                 else:
@@ -345,6 +346,8 @@ def main():
                           'changed': sum(x['text'] != workspace.rows[k]['existing'] for k, x in reviews.items()),
                           'not_started': len(workspace.rows)-len(reviews), 'product_eligible': 0}, ensure_ascii=False, indent=2))
     else:
+        from translation_speakers import load_speakers
+        workspace.speakers = load_speakers(workspace.workspaces[0].baseline)
         server = HTTPServer(('127.0.0.1', args.port), handler_for(workspace))
         url = f'http://127.0.0.1:{server.server_port}/'
         print(f'Translation review: {url}\nSaved: {args.directory / "reviews.json"}', flush=True)

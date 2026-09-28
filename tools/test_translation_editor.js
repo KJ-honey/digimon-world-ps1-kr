@@ -38,3 +38,19 @@ test('catalog editor never adds DG terminators or rewrites spaces', () => {
       for (const value of [row.source, row.existing]) assert.equal(catalogRoundtrip(value), value, row.id);
   }
 });
+
+const filterDefinitions = html.slice(html.indexOf('const categories='), html.indexOf('function error('));
+const matchesDefinition = html.slice(html.indexOf('function matches('), html.indexOf('function filter('));
+const matchRow = new Function('r', 'data', 'reviews', 'values',
+  'const $=id=>({value:values[id]});' + filterDefinitions + matchesDefinition + 'return matches(r);');
+test('speaker filter combines with search, category and review status', () => {
+  const r={id:'line', script:1, source:'原文', existing:'번역'};
+  const data={speakers:{line:{label:'할배몬 / ジジモン', candidates:[{id:'jiji'}]}}};
+  const values={category:'all',filter:'all',script:'all',search:'', 'speaker-filter':'jiji'};
+  assert.equal(matchRow(r,data,{},values),true);
+  assert.equal(matchRow(r,data,{}, {...values,'speaker-filter':'player'}),false);
+  assert.equal(matchRow(r,data,{}, {...values,search:'할배몬'}),true);
+  assert.equal(matchRow(r,data,{}, {...values,category:'item_name'}),false);
+  assert.equal(matchRow(r,data,{}, {...values,filter:'accepted'}),false);
+  assert.equal(matchRow({...r,id:'catalog',category:'item_name'},data,{},values),false);
+});
