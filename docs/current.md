@@ -1,5 +1,14 @@
 # 현재 상태
 
+**통합 개발 빌드:** `python3 tools/build_full.py` 한 명령으로 현재 대사·카탈로그
+검수 문구를 내보내고 Mona12 폰트, 두벌식 이름 입력과 함께
+`work/build/full-development/dg-expanded.cue`를 만든다. 원본 자료에서
+문자표를 다시 만들므로 이전 `work/build` 이미지에 의존하지 않는다. 빌드가 성공한
+뒤에만 기존 출력 폴더를 교체한다. 현재 검수 초안 중 대사 `dg-text-005924`(258px),
+`dg-text-005e24`(276px)는 252px 한도를 넘고 카탈로그 `item_name-121`은 held 상태라
+현 입력의 통합 빌드는 중단된다. 검수 문구·상태를 자동 변경하거나 건너뛰지 않는다.
+기존 `full-development` ISO는 이 스크립트 실행 전 산출물이며 카탈로그 수정이 없다.
+
 기준일: 2026-09-28. 기록 ID: `recovery-001`, 후속 `dg-boundaries-001`, `dg-runtime-001`, `font-expand-001`, `translation-review-001`, `dg-expand-001`, `spacing-003`, `name-entry-001`. 
 
 **최신 재삽입 작업 (`catalog-insert-001`):** 대사 외 506개 카탈로그를 `dg_expand.py`의
