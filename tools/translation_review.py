@@ -144,9 +144,11 @@ class Workspace:
                                   and TOKEN.findall(text) == TOKEN.findall(row['source'])
                                   and retains_existing_glyphs)
         from dg_control_restorations import review_restoration_allowed
+        from dg_line_reflows import review_reflow_allowed
         if (TOKEN.findall(text) != TOKEN.findall(row['existing'])
                 and not restored_source_controls and not restored_source_tokens
-                and not review_restoration_allowed(row, text)):
+                and not review_restoration_allowed(row, text)
+                and not review_reflow_allowed(row, text)):
             raise ValueError('보호 토큰의 순서·값·개수를 유지해 주세요. 원문 토큰 보기에서 확인할 수 있습니다.')
         remainder = TOKEN.sub('', text)
         if '⟦' in remainder or '⟧' in remainder or any(ord(c) < 32 and c not in '\n\t' for c in remainder):

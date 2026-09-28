@@ -16,6 +16,9 @@ from dg_build import sector_plan
 from dg_script import decode, text_tokens
 from dg_spacing import dialogue_codec, is_half_space
 from dg_control_restorations import restoration_allowed
+from dg_line_reflows import reflow_allowed
+from dg_layout import (DYNAMIC_BYTES, DYNAMIC_TABLE_MAX_CHARS,
+                       DYNAMIC_TABLE_OPCODES, MAX_LINE_PIXELS, validate_encoded_layout)
 from dg_pixel_row import compile_pixel_row
 from font_expand import assemble, compile_font
 from glyph_review import SOURCE
@@ -31,16 +34,6 @@ HOOK = 0x64200
 HOOK_BEFORE = bytes.fromhex('d0ffbd271c00bfaf')
 MARKER = b'\x15\xd7'
 BLOCK = 2048
-# 800F44E0..4884: fixed digit loops in 800F4F44; names are six 2-byte
-# characters plus NUL (see docs/current.md).
-DYNAMIC_BYTES = {4: 6, 5: 12, 6: 12, 10: 12, 11: 8, 16: 10,
-                 19: 6, 20: 6, 21: 6}
-# User-specified ceiling (2026-09-28), not an exhaustive table measurement.
-# Species/card, technique, item, song and tournament names all use this bound.
-# The inserted output replaces the two-byte command; do not add its bytes again.
-DYNAMIC_TABLE_MAX_CHARS = 10
-DYNAMIC_TABLE_OPCODES = (0x07, 0x08, 0x09, 0x11, 0x12)
-DYNAMIC_BYTES.update({op: 2 * DYNAMIC_TABLE_MAX_CHARS for op in DYNAMIC_TABLE_OPCODES})
 
 
 def validate_manifest(manifest):
@@ -69,7 +62,8 @@ def validate_text(old, new, codec, *, entry_id=None):
                            if not is_half_space(t, codec) and
                            (t['kind'] != 'glyph' or codec.mapping.get(t['raw'].upper()) is None)]
     restored = protected(before) != protected(after)
-    if restored and not restoration_allowed(entry_id, old, protected(after)):
+    reflowed = reflow_allowed(entry_id, old, protected(after))
+    if restored and not restoration_allowed(entry_id, old, protected(after)) and not reflowed:
         raise ValueError('Protected control/argument/unknown glyph sequence changed')
     # Output rows have a 64-byte stride, independent of source allocation.
     # Dynamic insertion budgets require a separately established environment.
@@ -90,7 +84,9 @@ def validate_text(old, new, codec, *, entry_id=None):
             row = 0
     if len(new)+9 > BLOCK:
         raise ValueError('Expanded text exceeds one-sector bank record')
-    if restored:
+    if reflowed:
+        validate_encoded_layout(after)
+    if restored and not reflowed:
         # These reviewed restorations use full-width glyphs, 01 colors, 05
         # player names, 0F spaces and 0D row breaks only. The real glyph
         # uploader refuses origins >= 244; test the six-character name case.
@@ -131,6 +127,7 @@ def prepare_bank(data, parsed, edits, codec):
         if edit['expected_hex'] != old[:-2].hex():
             raise ValueError('Stale source text: '+key)
         new = codec.encode(edit['text']) + old[-2:]
+        validate_encoded_layout(text_tokens(new, 0, len(new))[1])
         if new == old:
             continue
         if len(old) < 4 or len(old) > 65535 or len(records) >= 65536:
@@ -355,7 +352,8 @@ def build(edits_path, output, expand_font=False):
                              'bytes_per_space':2,'renderer_code_changed':bool(pixel_report),
                              'pixel_row':pixel_report},
                   'dynamic_table_max_characters':DYNAMIC_TABLE_MAX_CHARS,
-                  'limitations':['ordered controls/line count except explicitly reviewed restorations', 'dynamic table ceiling is user-specified, not independently measured',
+                  'max_line_pixels':MAX_LINE_PIXELS,
+                  'limitations':['protected streams require source-bound restoration/reflow rules', '168px rows under declared dynamic budgets', 'dynamic table ceiling is user-specified, not independently measured',
                                  'extra synchronous CD read for each changed text',
                                  'full native/overlay caller and streaming regression pending']}
         write_json(output/'build.json',report)

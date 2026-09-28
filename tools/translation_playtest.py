@@ -12,7 +12,8 @@ from pathlib import Path
 
 from dg_analyze import read_source, verified_texts
 from dg_expand import DYNAMIC_TABLE_MAX_CHARS, validate_text
-from dg_script import decode
+from dg_script import decode, text_tokens
+from dg_layout import MAX_LINE_PIXELS, validate_layout, validate_encoded_layout
 from dg_spacing import dialogue_codec
 from survey import ROOT, SOURCES, sha, write_json
 from translation_review import Workspace, TOKEN, WORK
@@ -76,12 +77,14 @@ def export(directory, output, font_map, defer_failed=False):
         old = bytes.fromhex(row['raw']['kor'])
         draft = reviews['entries'][key]
         try:
+            validate_layout(draft['text'])
             if draft['text'] == row['existing']:
                 new = old
             else:
                 encoded, aliases = encode_draft(draft['text'], codec)
                 new = encoded + b'\0\0'
                 validate_text(old, new, codec, entry_id=key)
+            validate_encoded_layout(text_tokens(new, 0, len(new))[1])
             unchanged += new == old
             edits.append(dict(id=key, expected_hex=old[:-2].hex(), text=codec.decode(new[:-2])))
         except ValueError as exc:
@@ -97,6 +100,7 @@ def export(directory, output, font_map, defer_failed=False):
                   changed=len(edits)-unchanged, deferred=deferred,
                   deferred_reason_counts=dict(Counter(e['reason'] for e in deferred)),
                   dynamic_table_max_characters=DYNAMIC_TABLE_MAX_CHARS,
+                  max_line_pixels=MAX_LINE_PIXELS,
                   dynamic_table_budget_basis='user-specified ceiling; not independently measured',
                   encoding_aliases=aliases, duplicate_hangul_policy='new 늪 uses 88C0; unchanged payload stays byte-identical',
                   deferral_explicitly_selected=defer_failed)
