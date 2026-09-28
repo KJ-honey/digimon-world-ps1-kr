@@ -40,6 +40,15 @@ class CatalogInsertionTests(unittest.TestCase):
         for text in ['가☃','가\n가','가⟦0F00⟧','가⟦G:0F00⟧']:
             with self.assertRaises(ValueError):encode_text(b['entries'][0],text,m)
 
+    def test_replacing_legacy_glyph_tokens_checks_new_glyph_supply(self):
+        _,b,_,m=self.fixture()
+        for code in ['95E2', '9860']:
+            row=dict(b['entries'][0], existing='⟦G:'+code+'⟧', raw={'kor':code+'00'})
+            self.assertEqual(encode_text(row, '가', m), bytes.fromhex('814100'))
+            self.assertEqual(encode_text(row, row['existing'], m), bytes.fromhex(code+'00'))
+            with self.assertRaisesRegex(ValueError, 'Unsupported catalog glyph'):
+                encode_text(row, '가⟦G:9860⟧', m)
+
     def test_shared_alias_relocated_without_changing_unselected_entry(self):
         exe,b,manifest,m=self.fixture()
         manifest['edits']=[dict(id='location_name-000',expected_hex='814100',text='가 가 가')]

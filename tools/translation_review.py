@@ -148,12 +148,18 @@ class Workspace:
                                   and retains_existing_glyphs)
         from dg_control_restorations import review_restoration_allowed
         from dg_line_reflows import review_reflow_allowed
-        if (TOKEN.findall(text) != TOKEN.findall(row['existing'])
+        # Catalog glyph tokens represent editable printed characters, not VM
+        # commands. The immutable baseline retains their original byte identity;
+        # catalog_insert checks glyph supply when encoding the authored wording.
+        if (row.get('text_format') != 'nul_glyph_string'
+                and TOKEN.findall(text) != TOKEN.findall(row['existing'])
                 and not restored_source_controls and not restored_source_tokens
                 and not review_restoration_allowed(row, text)
                 and not review_reflow_allowed(row, text)):
             raise ValueError('보호 토큰의 순서·값·개수를 유지해 주세요. 원문 토큰 보기에서 확인할 수 있습니다.')
-        remainder = TOKEN.sub('', text)
+        editable_tokens = (re.compile(r'⟦G:[0-9A-F]{4}⟧')
+                           if row.get('text_format') == 'nul_glyph_string' else TOKEN)
+        remainder = editable_tokens.sub('', text)
         if '⟦' in remainder or '⟧' in remainder or any(ord(c) < 32 and c not in '\n\t' for c in remainder):
             raise ValueError('잘못된 보호 토큰 또는 제어 문자가 있습니다.')
         if status == 'unchanged' and text != row['existing']:

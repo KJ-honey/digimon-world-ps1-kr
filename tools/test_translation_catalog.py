@@ -47,10 +47,13 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(decode_reversible(tokens, {'8140': '　', '88C0': '늪', '95E2': '늪'}),
                          '　⟦G:88C0⟧⟦G:95E2⟧⟦G:9860⟧')
 
-    def test_catalog_disallows_dg_controls_and_lost_glyph(self):
+    def test_catalog_glyphs_are_editable_but_controls_are_not_allowed(self):
         row = dict(id='item_name-001', text_format='nul_glyph_string', source='原文', existing='초⟦G:9860⟧꽃')
         Workspace.validate(row, '초⟦G:9860⟧꽃 열매', 'draft')
-        for text in ['초꽃', '초⟦G:9860⟧꽃⟦0D00⟧', '초⟦G:9860⟧꽃\n열매']:
+        Workspace.validate(row, '초꽃 열매', 'draft')
+        Workspace.validate(dict(row, existing='개굴⟦G:95E2⟧지'), '개굴늪지', 'draft')
+        for text in ['초⟦G:9860⟧꽃⟦0D00⟧', '초⟦G:9860⟧꽃\n열매',
+                     '초⟦G:98600000⟧꽃', '초⟦G:zzzz⟧꽃']:
             with self.assertRaises(ValueError):
                 Workspace.validate(row, text, 'draft')
 
