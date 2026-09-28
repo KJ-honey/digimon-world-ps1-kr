@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Audit all current drafts or apply an explicit, source-checked 168px edit plan.
+"""Audit all current drafts or apply an explicit, source-checked edit plan.
 
 No rewriting runs during build/export. Apply records full backups, revisions,
 widths and the exact authorized protected streams. Plan prose remains in work/.
@@ -41,7 +41,7 @@ def apply_plan(directory, plan_path, output):
         original = workspace.load()
         after = copy.deepcopy(original)
         rules = json.loads(RULES.read_text()) if RULES.exists() else dict(
-            format=1, instruction='2026-09-28 user: all translated rows <= 168px', entries={})
+            format=1, instruction=f'2026-09-28 user: all translated rows <= {MAX_LINE_PIXELS}px', entries={})
         prior_rules = copy.deepcopy(rules)
         seen = set()
         changes = []
@@ -78,7 +78,7 @@ def apply_plan(directory, plan_path, output):
                         status='held' if previous['status']=='held' else 'draft',
                         author='assistant', updated_at=now(), wording_sha256=sha(text.encode()),
                         product_eligible=False, layout_verified=False, runtime_verified=False)
-            item['rationale'] = previous.get('rationale','') + '\n168px 행 폭 수정: '+edit['reason']
+            item['rationale'] = previous.get('rationale','') + f'\n{MAX_LINE_PIXELS}px 행 폭 수정: '+edit['reason']
             item['source_controls_restored_in_draft'] = (item.get('source_control_difference',False)
                 and [t for t in TOKEN.findall(text) if not t.startswith('⟦G:')]
                     == [t for t in TOKEN.findall(row['source']) if not t.startswith('⟦G:')])

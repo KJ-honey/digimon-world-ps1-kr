@@ -1,11 +1,11 @@
-"""DG dialogue width budget: 168px, full-cell glyphs and 6px half spaces.
+"""DG dialogue width budget: 252px, full-cell glyphs and 6px half spaces.
 
 Dynamic name/table bounds follow the existing consumer byte budgets. Width is
 not byte count: raw button/unit glyphs occupy one cell, color controls none.
 """
 import re
 
-MAX_LINE_PIXELS = 168
+MAX_LINE_PIXELS = 252
 DYNAMIC_TABLE_MAX_CHARS = 10
 DYNAMIC_TABLE_OPCODES = (0x07, 0x08, 0x09, 0x11, 0x12)
 # RAM 800F44E0..4884 / digit loops 800F4F44: byte budgets for rendered
@@ -48,7 +48,7 @@ def validate_layout(text):
     widths = line_widths(text)
     for index, width in enumerate(widths, 1):
         if width > MAX_LINE_PIXELS:
-            raise ValueError(f'DG line {index} exceeds 168px: {width}px')
+            raise ValueError(f'DG line {index} exceeds {MAX_LINE_PIXELS}px: {width}px')
     return widths
 
 

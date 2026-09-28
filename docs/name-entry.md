@@ -51,7 +51,7 @@ SHOP 논리 파일 offset으로는 `[41E0,5D04)`다. overlay base는 `80080800`�
 
 ```sh
 python3 tools/dg_expand.py \
-  --edits work/line-width-168/selected-final/edits.json \
+  --edits work/line-width-252/selected-final/edits.json \
   --expand-font --name-entry --output work/build/name-entry
 python3 tools/name_cpu_verify.py work/build/name-entry
 python3 tools/font_cpu_verify.py work/build/name-entry

@@ -124,8 +124,24 @@ script 98·153·179·220의 반복 대회 설명 22종은 원문과 기존 번�
 | `work/translation/batches/` | 개별 작성 TSV와 저장·검사 보조 스크립트. 현재 문구의 기준은 reviews.json |
 
 브라우저의 **검수 백업**은 기준 자료·현재 결정·이력·용어/문제 기록을 함께 JSON으로 내려받는다.
-`work/`는 Git 제외 대상이므로 별도 백업한다. 최초 TSV/JSON 묶음은 초안 작성 기록이고,
+`work/translation/reviews.json`, `style-decisions.json`, `issues.json`은 Git 추적 대상이다.
+`reviews.json`에는 이전 revision의 문구·사유·작성자·시각도 보존한다. 추출 기준 자료인
+`baseline.json`과 ISO·빌드·QA 산출물은 계속 Git에서 제외한다. 최초 TSV/JSON 묶음은 초안 작성 기록이고,
 수정 이후의 기준 문구는 항상 `reviews.json`이다. import는 기존 결정을 덮어쓰지 않는다.
+
+2026-09-28 폭 기준 정정의 복구 지점:
+
+- `50d70e3`: 168px 조정 완료 상태와 그 이전 수정 이력을 처음 Git에 보존.
+- `0139d0e`: 168px 조정 전 4,617개 문구를 전부 복구한 번역 스냅샷. 168px 시기의
+  변경도 각 항목의 `history`에 남는다. 이 스냅샷에는 252px 초과 219개가 있으므로
+  그대로 제품 빌드하는 기준은 아니다.
+- 현재 `reviews.json`: 252px에 맞춰 219개를 배치한 상태. 218개는 문구를 유지한
+  줄바꿈·공백 배치, 신문 1개는 사용자 승인에 따라 기존 줄 수 안에 축약했다.
+
+과거 문구 확인: `git show 0139d0e:work/translation/reviews.json`.
+이후 번역 수정도 이 파일의 diff를 검토하고 커밋한다. 번역은 재생성 가능한 임시
+산출물로 취급하지 않는다. 복구할 때는 함께 대응하는 `tools/dg_line_reflows.json`의
+보호 토큰 허용 기록도 대조하며, 빌드 검사를 우회하지 않는다.
 
 원문과 기존 번역의 제어열이 다른 9개를 모두 초안에서 복원했다. 이름·화자명 색상 등의
 복원을 단순 문구 확장과 구분해 `source_controls_restored_in_draft=true`를 남겼다.

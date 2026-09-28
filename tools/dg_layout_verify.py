@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 from dg_analyze import read_source
 from dg_cpu_verify import Consumer
-from dg_layout import DYNAMIC_BYTES, validate_layout
+from dg_layout import DYNAMIC_BYTES, MAX_LINE_PIXELS, validate_layout
 from dg_script import text_tokens
 from dg_spacing import dialogue_codec
 from dg_spacing_verify import RowRenderer
@@ -43,7 +43,7 @@ def verify(output):
             events=renderer.run(row)
             edge=max([0]+[e['x']+12 if e['kind']=='glyph' else e['rect'][0]+e['rect'][2]
                           for e in events if e['kind'] in ('glyph','clear')])
-            if edge!=expected_width or edge>168:
+            if edge!=expected_width or edge>MAX_LINE_PIXELS:
                 raise ValueError(f'{key} row {i+1}: CPU {edge}, expected {expected_width}')
             measured.append(edge)
         results.append(dict(id=key,revision=item['revision'],pixels=measured))

@@ -60,7 +60,9 @@ def verify(build):
     tests=[('half','81410f008141'),('full','814181408141'),('two','81410f000f008141'),
            ('adjacent_shifted','0f00814181418141'),('trailing','0f0081410f00'),
            ('colored','01010f0081410107814181408141'),('tabs','81410c0081410e008141'),
-           ('empty',''),('clipped','8141'*22),('all_half','0f00'*30)]
+           ('empty',''),('full_width_21','8141'*21),
+           ('full_width_half_spaces','0f00'*2+'8141'*20),
+           ('clipped','8141'*22),('all_half','0f00'*30)]
     checks=[]
     for name,raw in tests:
         data=bytes.fromhex(raw+'0d000000')

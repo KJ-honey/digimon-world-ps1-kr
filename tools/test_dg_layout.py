@@ -13,19 +13,20 @@ from survey import sha
 
 
 class LayoutTests(unittest.TestCase):
-    def test_exact_14_cells_and_one_half_space_overflow(self):
-        self.assertEqual(validate_layout('가'*14+LINE), [168])
-        with self.assertRaisesRegex(ValueError, '174px'):
-            validate_layout('가'*14+' '+LINE)
-        self.assertEqual(validate_layout('가'*13+'  '+LINE), [168])
+    def test_exact_21_cells_and_one_half_space_overflow(self):
+        self.assertEqual(validate_layout('가'*21+LINE), [252])
+        with self.assertRaisesRegex(ValueError, '258px'):
+            validate_layout('가'*21+' '+LINE)
+        self.assertEqual(validate_layout('가'*20+'  '+LINE), [252])
 
     def test_punctuation_ascii_digits_and_raw_symbols_are_full_cells(self):
         self.assertEqual(line_widths('!,.A0⟦G:8283⟧　 '+LINE), [90])
 
     def test_colors_have_no_width_and_names_are_six_cells(self):
         self.assertEqual(line_widths('⟦0106⟧⟦0500⟧⟦0101⟧⟦0600⟧'+LINE),[144])
-        with self.assertRaisesRegex(ValueError,'180px'):
-            validate_layout('⟦0500⟧⟦0600⟧!!!'+LINE)
+        self.assertEqual(validate_layout('⟦0500⟧⟦0600⟧'+'!'*9+LINE),[252])
+        with self.assertRaisesRegex(ValueError,'264px'):
+            validate_layout('⟦0500⟧⟦0600⟧'+'!'*10+LINE)
 
     def test_table_names_reserve_ten_cells_and_digits_keep_budget(self):
         for op in ('07F9','08F3','09C8','11F9','1203'):
@@ -42,11 +43,11 @@ class LayoutTests(unittest.TestCase):
 
     def test_bank_cannot_bypass_width_check_with_unchanged_payload(self):
         codec=LegacyCodec({'8141':'가'})
-        payload=bytes.fromhex('8141')*15+bytes.fromhex('0d000000')
+        payload=bytes.fromhex('8141')*22+bytes.fromhex('0d000000')
         raw=b'\x1a\0'+payload+b'\xfe\0'
         node=dict(instruction(raw,0,0,len(raw)),script=0)
-        edit=dict(id='dg-text-000000',expected_hex=payload[:-2].hex(),text='가'*15+'<0D00>')
-        with self.assertRaisesRegex(ValueError,'168px'):
+        edit=dict(id='dg-text-000000',expected_hex=payload[:-2].hex(),text='가'*22+'<0D00>')
+        with self.assertRaisesRegex(ValueError,'252px'):
             prepare_bank(raw,dict(nodes=[node],overlaps=[]),[edit],codec)
 
     def test_reflow_rule_binds_id_source_and_entire_protected_stream(self):

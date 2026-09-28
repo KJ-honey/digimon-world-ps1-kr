@@ -369,7 +369,7 @@ def build(edits_path, output, expand_font=False, name_entry=False):
                              'pixel_row':pixel_report},
                   'dynamic_table_max_characters':DYNAMIC_TABLE_MAX_CHARS,
                   'max_line_pixels':MAX_LINE_PIXELS,
-                  'limitations':['protected streams require source-bound restoration/reflow rules', '168px rows under declared dynamic budgets', 'dynamic table ceiling is user-specified, not independently measured',
+                  'limitations':['protected streams require source-bound restoration/reflow rules', f'{MAX_LINE_PIXELS}px rows under declared dynamic budgets', 'dynamic table ceiling is user-specified, not independently measured',
                                  'extra synchronous CD read for each changed text',
                                  'full native/overlay caller and streaming regression pending']}
         write_json(output/'build.json',report)

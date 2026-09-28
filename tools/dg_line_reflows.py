@@ -1,4 +1,4 @@
-"""Exact, source-bound protected streams for the user's 168px reflow.
+"""Exact, source-bound protected streams for authorized dialogue reflows.
 
 The registry contains hashes only, not game assets or translated prose. It
 does not authorize arbitrary new lines, changed buttons, names, or arguments.

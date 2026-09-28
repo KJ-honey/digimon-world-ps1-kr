@@ -33,15 +33,39 @@
 
 ## 기준 입력과 보존
 
-최신 사용자 요청 테스트 이미지: `work/build/control-restorations-001/dg-expanded.cue`.
+이전 대사 복원 테스트 이미지: `work/build/control-restorations-001/dg-expanded.cue`.
 2026-09-28, 공백·동적 명칭 10글자 상한·원문 제어 복원·줄 배치를 함께 반영했다.
 전체 4,617개 선택, 검사상 보류 0개. 이미지 무결성·재추출·4,421개 변경 대사의
 CPU 검증을 통과했다. 이 이미지 자체의 실제 게임 플레이는 아직 확인하지 않았다.
 
-**최신 번역문은 위 이미지보다 새롭다.** 2026-09-28 사용자 지정 **한 줄 168px**에
-맞춰 2,253개를 수정했다. 현재 번역 4,617개/10,606줄의 초과는 0개이며, 새 입력은
-`work/line-width-168/selected-final/edits.json`이다. ISO는 아직 재생성하지 않았다.
-상세 기준·검증은 아래 `대사 168px 제한` 절과 [dialogue-width.md](dialogue-width.md) 참조.
+**현재 통합 테스트 이미지: `work/build/name-entry-252/dg-expanded.cue`.**
+2026-09-28 사용자 정정: **21글자 × 12px = 한 줄 252px**. 168px 조건을 폐기했다.
+168px 조정 전 전체 백업으로 4,617개 문구를 복구한 후 252px 초과 219개만 조정했다.
+218개는 줄바꿈·공백 배치, 신문 1개는 사용자 승인에 따라 기존 8줄 안에 축약했다.
+4,398개는 복구본과 문구·배치가 완전히 같다. 전체 8,696줄, 최대 252px, 초과 0개다.
+현재 입력은 `work/line-width-252/selected-final/edits.json`. 수정 4,421개/동일 196개를
+이름 입력·Mona12 폰트와 통합했다. ISO SHA-256:
+`d41cffb6fea60e9692d3f47c8fa2220582b63b3be8b89ecd978869580f243487`.
+
+이전 `name-entry-final` 이미지는 168px 버전이며 보존했다. 대사 재포함 검사 기록도
+그 이미지에 대한 증거다. 현재 폭·복구 기록은 [dialogue-width.md](dialogue-width.md) 참조.
+
+252px 버전 검증: 자동 테스트 74개, 8,696줄의 MIPS 소비자·렌더러 좌표 대조,
+변경 대사 4,421개 bank CPU 검증, 21글자/혼합 공백 252px 행을 포함한 픽셀 검사를
+통과했다. 최종 ISO 재추출로 최신 입력 전체와 bank·스크립트 연결·MAPHEAD를 대조했다.
+`SLPS_017.97`과 `SHOP_REL.BIN`은 이전 이름 입력 이미지와 바이트 전체가 같아
+이름 입력·폰트 구현은 그대로다. 새 이미지의 실제 게임 실행은 하지 않았다.
+증거: `work/line-width-252/cpu-widths.json`, `tests-final.log`,
+`work/build/name-entry-252/dialogue-inclusion-verification.json`,
+`bank/cpu-verification.json`, `pixel-row/cpu-verification.json`.
+
+**번역 Git 보존:** 이전에는 `work/` 전체 제외로 작성한 번역까지 추적하지 않은 관리
+결함이 있었다. 이제 `work/translation/{reviews,style-decisions,issues}.json`만 명시적으로
+Git 추적하며, 추출 baseline·ISO·BIOS·빌드 산출물 제외는 유지한다.
+`50d70e3`은 168px 상태와 기존 수정 이력, `0139d0e`는 168px 이전 문구 전체 복구점이다.
+`reviews.json`의 항목별 history도 삭제하지 않고 복구와 252px 수정을 새 revision으로
+추가했다. 168px 이후 수정은 폭 조정 후속 1건뿐임을 대조한 후 복구했다.
+
 
 | 입력 | SHA-256 |
 | --- | --- |
@@ -599,7 +623,7 @@ EXE 전체 bytes는 `spacing-003`과 동일하여 폰트·정확한 6px 렌더�
 10글자 동적 명칭 상한은 사용자 지정이며 전수 실측이 아니다. 실제 게임 실행·해당
 9개 장면 및 전체 회귀·저장 검증은 이 새 이미지에서 수행하지 않았다.
 
-### 대사 168px 제한 (line-width-168, 2026-09-28)
+### 이전 대사 168px 제한 (line-width-168, 현재 252px로 폐기, 2026-09-28)
 
 사용자가 게임 대사는 한 줄 14칸, 즉 **168px**이라고 확정했다. 일반 반각 공백은
 6px, 전각 공백·문장부호·ASCII 영문/숫자·버튼/단위 등 특수 글리프는 모두 12px다.
@@ -609,7 +633,7 @@ EXE 전체 bytes는 `spacing-003`과 동일하여 폰트·정확한 6px 렌더�
 
 현재 확인된 DG 번역 4,617개 중 **2,253개/3,090줄**이 초과했다. 해당 항목을 수정하여
 최종 **4,617개/10,606줄, 최대 168px, 초과 0개**다. 전체 게임의 미추출 모듈까지
-검사를 완료했다는 뜻은 아니다. 현재 원본은 `work/translation/reviews.json`이다.
+검사를 완료했다는 뜻은 아니다. 당시 원본은 `work/translation/reviews.json`이었다. 현재 파일은 위의 252px 복구본이다.
 
 - 1,982개는 문구를 보존한 줄바꿈, 102개는 개별 축약·배치, 81개는 선택지 문구·가격표
   간격, 88개는 대회 안내의 빈 행 활용으로 수정했다. 동적 명칭 뒤 단어가 갈리지 않게
@@ -643,7 +667,8 @@ EXE 전체 bytes는 `spacing-003`과 동일하여 폰트·정확한 6px 렌더�
 현재 이미지: `work/build/name-entry-final/dg-expanded.cue`.
 ISO SHA-256 `fe082b33fc7bab96695aa1be89255edc2a13a87bd88381339ec17e29e282b0f7`.
 `name-007`, `name-008`, `name-entry-final`의 이미지가 전체 해시 일치한다.
-최신 168px 대사 4,617개 중 변경 4,424개와 Mona12 확장을 함께 포함한다.
+당시 168px 대사 4,617개 중 변경 4,424개와 Mona12 확장을 함께 포함한다.
+현재는 위 `name-entry-252` 이미지가 이를 대체한다.
 이름 입력용 호환 자모 51칸을 더해 전체 폰트는 fallback 포함 2,481칸이다.
 
 - SHOP RAM `[800849E0,80086504)` / SHOP 논리 `[41E0,5D04)`의 이름 전용 루틴을

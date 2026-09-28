@@ -1,4 +1,45 @@
-# 대사 한 줄 168px
+# 대사 한 줄 252px
+
+2026-09-28 사용자 정정: **21칸 × 12px = 252px**. 이전 14칸/168px 조건은
+폐기했다. 아래의 168px 기록은 복구 이력이며 현재 빌드 기준이 아니다.
+
+현재 번역은 `work/translation/reviews.json`이며 Git에서 추적한다. 168px 조정 직전의
+전체 백업으로 4,617개 문구를 복구한 뒤, 252px를 초과하는 219개만 다시 조정했다.
+4,398개는 복구본과 완전히 같고, 218개는 줄바꿈·공백 배치만 달라졌다. 신문 1개
+(`dg-text-09782e`)는 사용자 승인으로 8줄을 유지하도록 원문과 대조해 축약했다.
+처음에는 신문 2개가 추가 행을 필요로 했으나 다른 1개는 제목의 들여쓰기와 본문 배치로
+해결해 문구를 보존했다. 가격 선택지 1개는 줄 수·가격·문구를 유지하고 행 끝의 전각
+공백 1개씩만 제거했다. 모든 항목의 줄바꿈 이외 보호 토큰열은 복구본과 일치한다.
+
+전체 **4,617개 / 8,696줄 / 최대 252px / 초과 0개**.
+기존 6px 공백, 12px 글리프, 이름 6글자, 동적 테이블 명칭 10글자 예산은 유지한다.
+원문 경계·제어·인코딩·64-byte 행 버퍼 검사도 유지한다. 문구 승인 상태나 배포 적격성을
+새로 부여하지 않았다.
+
+자동 테스트 74개와 전체 8,696줄의 MIPS 좌표 검사를 통과했다. 최종 ISO 내부의
+변경 대사 4,421개, 스크립트 연결과 MAPHEAD 사본이 최신 입력과 일치한다.
+bank 소비자 CPU 검사 및 21글자/혼합 공백 252px 행의 픽셀 검증도 통과했다.
+이름 입력과 폰트가 들어 있는 EXE·SHOP 파일은 이전 이미지와 전체 바이트가 같다.
+CPU 검사에서 CD·BIOS·GPU는 대역으로 처리했다. 새 이미지의 실제 게임 실행은 미검증이다.
+
+- Git 복구점 `50d70e3`: 168px 버전과 그 이전의 항목별 수정 이력.
+- Git 복구점 `0139d0e`: 168px 조정 전 4,617개 문구 전체 복구(252px 초과 219개 포함).
+- 현재 적용 입력: `work/line-width-252/selected-final/edits.json`.
+- 최종 통합 이미지: `work/build/name-entry-252/dg-expanded.cue`.
+- 복구·전후 문구·계획·검사 기록: `work/line-width-252/`.
+
+```sh
+python3 tools/translation_layout.py --output work/line-width-252/audit-new.json
+python3 tools/translation_playtest.py --output work/line-width-252/selected-new
+python3 tools/dg_expand.py --edits work/line-width-252/selected-new/edits.json --expand-font --name-entry --output work/build/name-entry-252-new
+python3 tools/dg_layout_verify.py --output work/line-width-252/cpu-new.json
+python3 -m unittest discover -s tools -p 'test_*.py'
+```
+
+빌드·내보내기 중 문구나 줄바꿈을 자동 수정하지 않는다. 명시적으로 저장한 수정 계획만 적용한다.
+
+## 이전 168px 작업 기록 (폐기된 폭 기준)
+
 
 2026-09-28 사용자 지정: 한 줄 14칸(168px). `work/translation/reviews.json`의
 현재 DG 번역 4,617개를 전수 검사해 2,253개 항목의 초과 3,090줄을 수정했다.
