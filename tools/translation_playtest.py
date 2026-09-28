@@ -120,7 +120,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--directory', type=Path, default=WORK)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--font-map', type=Path, default=ROOT/'work/build/mona12-final/font/character-map.json')
+    parser.add_argument('--font-map', type=Path, default=ROOT/'work/build/full-development/font/character-map.json')
     parser.add_argument('--defer-failed', action='store_true', help='Explicitly preserve failed entries as original disc text')
     args = parser.parse_args()
     print(json.dumps(export(args.directory,args.output,args.font_map,args.defer_failed),ensure_ascii=False,indent=2))

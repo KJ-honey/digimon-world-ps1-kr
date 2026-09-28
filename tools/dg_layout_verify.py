@@ -22,7 +22,7 @@ from translation_review import Workspace, WORK
 def verify(output):
     workspace=Workspace(WORK)
     reviews=workspace.load()
-    codec=dialogue_codec(json.loads((ROOT/'work/build/mona12-final/font/character-map.json').read_text()))
+    codec=dialogue_codec(json.loads((ROOT/'work/build/full-development/font/character-map.json').read_text()))
     exe=read_source('kor')['SLPS_017.97']
     consumer,renderer=Consumer(exe),RowRenderer(exe)
     results=[]
