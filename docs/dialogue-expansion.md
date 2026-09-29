@@ -4,6 +4,27 @@
 `dg_export.py`의 기존 manifest를 그대로 입력하며, 원문 payload 길이와 번역 길이가
 달라도 빌드한다. 미확인 후보를 실행 대사로 승격하지 않는다.
 
+## 대사 전환 지연 제거 경로 (2026-09-29)
+
+`build_full.py`는 현재 `--resident-dialogue`에 해당하는 RAM 상주 압축 경로를
+사용한다. 아래의 “대사마다 CD 한 sector 읽기”는 이전 구현이며 개별 빌드의
+재현용 기본 경로로 남는다. 수정 이미지와 검증 경계는 [현재 상태](current.md)를 참조한다.
+
+253개 자주 쓰는 byte 쌍을 한 byte로 표현하고, `FD`는 literal 쌍,
+`FE`는 다음 pool 위치, `FF`는 record 종료다. 복원 결과는 원문 길이 u16과
+번역 payload다. descriptor의 u16은 현재 script base 기준 offset이며 최상위 bit가
+있으면 scratch 내 초기 상주 데이터 offset이다. script 0 base는 RAM `80159784`,
+일반 script는 RAM `80161784`, scratch는 RAM `80160784`다. 주소 종류는 모두 RAM이다.
+풀은 변경 대상으로 검증된 원래 payload의 첫 descriptor 4 bytes 이후만 사용한다.
+스크립트 밖 overflow는 초기 8 KiB directory read에 함께 들어오며, 복원 출력과
+겹치지 않는 scratch 후반을 빌드 시 예약한다. 사전은 DG 논리 offset `0E00..0FF9`다.
+공간 부족은 명시적 빌드 오류이며 자동 CD fallback은 없다. 문구/제어 byte를 바꾸지 않는다.
+
+빌드에서 모든 압축 record를 독립 decoder로 왕복하고, 모든 비대사 byte가 불변인지
+검사한다. `dg_bank_verify.py`는 실제 스크립트와 상주 pool을 메모리에 올린 뒤 모든
+변경 대사의 원래 소비자 결과·VM 복귀·상주 영역 보존과 추가 CD 호출 0회를 검사한다.
+CPU 검증은 실제 CD 시간 또는 체감 프리즈 해소의 증거가 아니다.
+
 ## 사용법
 
 지명·아이템·디지몬명/설명은 `--catalog-edits`로 같은 이미지에 합친다.

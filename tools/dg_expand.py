@@ -158,12 +158,15 @@ def prepare_bank(data, parsed, edits, codec):
     return bytes(changed), records, entries
 
 
-def compile_bank(exe, bank_offset, output, catalog_bank_offset=None):
+def compile_bank(exe, bank_offset, output, catalog_bank_offset=None, resident_dictionary=None):
     if exe[HOOK:HOOK+8] != HOOK_BEFORE:
         raise ValueError('Text consumer hook revision mismatch')
     output.mkdir(parents=True)
-    template = (ROOT/'tools/dg_bank.s').read_text()
+    template = (ROOT/'tools'/('dg_resident.s' if resident_dictionary is not None else 'dg_bank.s')).read_text()
     definitions = {'BANK': bank_offset, 'SCRATCH': SCRATCH_RAM, 'TRAMPOLINE': CODE_RAM}
+    if resident_dictionary is not None:
+        from dg_resident import DICTIONARY_OFFSET
+        definitions['DICTIONARY'] = CODE_RAM + DICTIONARY_OFFSET
     def source():
         return ''.join(f'.equ {k}_HI, {v>>16}\n.equ {k}_LO, {v&65535}\n'
                        for k,v in definitions.items()) + template
@@ -185,6 +188,10 @@ def compile_bank(exe, bank_offset, output, catalog_bank_offset=None):
         code=combined
         from catalog_insert import verify_machine_code
         verify_machine_code(code,CODE_RAM,output/'catalog-addressed.asm')
+    if resident_dictionary is not None:
+        if len(code)>DICTIONARY_OFFSET or len(resident_dictionary)!=506:
+            raise ValueError('Resident dictionary/helper overlap')
+        code=code.ljust(DICTIONARY_OFFSET,b'\0')+resident_dictionary
     # An absolute J stays in the same 256 MiB region; this fixed instruction
     # is independently decoded by Capstone and checked against its target.
     from capstone import Cs, CS_ARCH_MIPS, CS_MODE_MIPS32, CS_MODE_LITTLE_ENDIAN
@@ -272,7 +279,7 @@ def image_plan(disc, table, writes, dg):
     return plan, dict(table['SCN/DG.SCN'],lba=start,size=len(dg)), updates
 
 
-def build(edits_path, output, expand_font=False, name_entry=False, catalog_edits=None):
+def build(edits_path, output, expand_font=False, name_entry=False, catalog_edits=None, resident_dialogue=False):
     if name_entry and not expand_font: raise ValueError("--name-entry requires --expand-font")
     if catalog_edits and not expand_font: raise ValueError('--catalog-edits requires --expand-font')
     if output.exists() or not output.resolve().is_relative_to((ROOT/'work').resolve()):
@@ -334,24 +341,31 @@ def build(edits_path, output, expand_font=False, name_entry=False, catalog_edits
                     raise ValueError('Exact DG half spaces require --expand-font (pixel row renderer)')
         if not entries and not (catalog_report and catalog_report['changed']):
             raise ValueError('No changed text; use dg_build.py for byte-identical no-op builds')
+        resident_report = resident_dictionary = None
+        scratch_initial = bytes(BLOCK)
+        if resident_dialogue:
+            from dg_resident import prepare as prepare_resident
+            changed,scratch_initial,resident_dictionary,resident_report = prepare_resident(data,parsed,entries)
+            records = []
         bank_offset = len(data)+SHIFT
         catalog_offset=bank_offset+len(records)*BLOCK
         has_catalog=bool(catalog_report and catalog_report['changed'])
-        code,hook = compile_bank(exe,bank_offset,output/'bank',catalog_offset if has_catalog else None)
+        code,hook = compile_bank(exe,bank_offset,output/'bank',catalog_offset if has_catalog else None, resident_dictionary)
         header = bytearray(data[:0x800])
         bounds = [s['base'] for s in parsed['scripts']] + [len(data)]
         struct.pack_into('<226I',header,0,*(b+SHIFT for b in bounds))
-        expanded_dg = (bytes(header)+code.ljust(BLOCK,b'\0')+bytes(BLOCK)+descriptors+
+        expanded_dg = (bytes(header)+code.ljust(BLOCK,b'\0')+scratch_initial+descriptors+
                        changed[0x800:]+b''.join(records+catalog_records))
         if expanded_dg[bank_offset:]!=b''.join(records+catalog_records):
             raise ValueError('Bank layout mismatch')
         for e in entries:
             if e['script']==0:
                 at = e['source_payload']-0x800
-                if at+4>len(mirror):
+                size = e['old_bytes'] if resident_dialogue else 4
+                if at+size>len(mirror):
                     raise ValueError('Descriptor outside MAPHEAD')
                 writes.append({'id':e['id']+'-descriptor','file':'SCN/MAPHEAD.SCN','file_offset':at,
-                               'before':mirror[at:at+4].hex(), 'after':changed[at+0x800:at+0x804].hex()})
+                               'before':mirror[at:at+size].hex(), 'after':changed[at+0x800:at+0x800+size].hex()})
         writes.append(hook)
         # The catalog renderer contains byte loads and owns this whole function.
         if not expand_font:
@@ -399,6 +413,7 @@ def build(edits_path, output, expand_font=False, name_entry=False, catalog_edits
         report = {'format':1,'status':'development-only','release_eligible':False,
                   'source_sha256':SOURCES['kor'][1],'output_sha256':result_hash,
                   'source_dg_sha256':sha(data),'dg_sha256':sha(expanded_dg),
+                  'resident_dialogue':resident_report,
                   'bank_offset':bank_offset,'code_ram':CODE_RAM,'scratch_ram':SCRATCH_RAM,
                   'script_file_offset_shift':SHIFT,'script_ram_offsets_unchanged':True,
                   'entries':entries,'writes':writes,'new_dg_extent':new_extent,
@@ -421,7 +436,7 @@ def build(edits_path, output, expand_font=False, name_entry=False, catalog_edits
                   'tournament_name_audit':tournament_names,
                   'max_line_pixels':MAX_LINE_PIXELS,
                   'limitations':['protected streams require source-bound restoration/reflow rules', f'{MAX_LINE_PIXELS}px rows under declared dynamic budgets', 'dynamic table ceiling is user-specified, not independently measured',
-                                 'extra synchronous CD read for each changed text',
+                                 ('resident pool capacity enforced; no per-dialogue CD read' if resident_dialogue else 'extra synchronous CD read for each changed text'),
                                  'full native/overlay caller and streaming regression pending']}
         write_json(output/'build.json',report)
         write_json(output/'edits.json',manifest)
@@ -440,5 +455,6 @@ if __name__=='__main__':
     p.add_argument('--expand-font',action='store_true')
     p.add_argument('--name-entry',action='store_true')
     p.add_argument('--catalog-edits',type=Path,help='Non-DG source-bound edit manifest')
+    p.add_argument('--resident-dialogue',action='store_true',help='Lossless in-script pools; no per-dialogue CD reads')
     a=p.parse_args()
-    print(json.dumps(build(a.edits,a.output,a.expand_font,a.name_entry,a.catalog_edits),ensure_ascii=False,indent=2))
+    print(json.dumps(build(a.edits,a.output,a.expand_font,a.name_entry,a.catalog_edits,a.resident_dialogue),ensure_ascii=False,indent=2))
