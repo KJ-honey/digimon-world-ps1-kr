@@ -54,11 +54,17 @@ class CatalogInsertionTests(unittest.TestCase):
         manifest['edits']=[dict(id='location_name-000',expected_hex='814100',text='가 가 가')]
         writes,records,descriptors,report=prepare(exe,b,manifest,m)
         self.assertEqual(len(writes),1)
-        self.assertEqual(struct.unpack('<I',bytes.fromhex(writes[0]['after']))[0],DESCRIPTOR_RAM)
+        self.assertEqual(struct.unpack('<I',bytes.fromhex(writes[0]['after']))[0],report['entries'][0]['target_ram'])
+        self.assertEqual(report['entries'][0]['policy'],'resident-directory-string')
+        self.assertFalse(records)
         result=bytearray(exe)
         for w in writes:result[w['file_offset']:w['file_offset']+4]=bytes.fromhex(w['after'])
         dg=bytes(0x1800)+descriptors+b''.join(records)
         verify_reinsertion(bytes(result),dg,0x2000,report,b,exe)
+        broken=bytearray(dg)
+        broken[report['entries'][0]['directory_offset']]^=1
+        with self.assertRaisesRegex(ValueError,'re-extraction'):
+            verify_reinsertion(bytes(result),bytes(broken),0x2000,report,b,exe)
         result[0x800]=0
         with self.assertRaises(ValueError):verify_reinsertion(bytes(result),dg,0x2000,report,b,exe)
 
@@ -68,7 +74,7 @@ class CatalogInsertionTests(unittest.TestCase):
         first=prepare(exe,b,manifest,m)
         manifest['edits'].reverse()
         self.assertEqual(first,prepare(exe,b,manifest,m))
-        self.assertNotEqual(first[1][0],first[1][1])
+        self.assertNotEqual(first[3]['entries'][0]['target_ram'],first[3]['entries'][1]['target_ram'])
 
     def test_inline_growth_preserves_record_fields_and_rejects_overflow(self):
         exe,b,manifest,m=self.fixture()
@@ -81,6 +87,14 @@ class CatalogInsertionTests(unittest.TestCase):
         self.assertEqual(result[0xa13:0xa20],exe[0xa13:0xa20])
         manifest['edits'][0]['text']='가'*10
         with self.assertRaisesRegex(ValueError,'20 bytes'):prepare(exe,b,manifest,m)
+
+    def test_resident_location_pool_rejects_overflow(self):
+        exe,b,manifest,m=self.fixture()
+        b['entries']=[dict(b['entries'][0],id=f'location_name-{i:03d}') for i in range(70)]
+        manifest['baseline_sha256']=digest(b)
+        manifest['edits']=[dict(id=r['id'],expected_hex='814100',text='가'*21) for r in b['entries']]
+        with self.assertRaisesRegex(ValueError,'capacity exceeded'):
+            prepare(exe,b,manifest,m)
 
     def test_unchanged_round_trip_and_fail_closed_inputs(self):
         exe,b,manifest,m=self.fixture()

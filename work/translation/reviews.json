@@ -119619,9 +119619,9 @@
       "rationale": "원문·기존문 개별 대조. だか 계열 모털몬의 천진난만함, アル 카드상 말투, 영주와 부하의 관계·존비어를 보존하고 안내 오류 및 공백 수정.\n공백 검토: 일반 공백 6px, 원문 들여쓰기·연출/표 공백 12px, 쉼표·느낌표 뒤 공백 삭제.\n사용자 252px 정정: 168px 조정 전 문구·배치 복구. 이후 별도 줄바꿈 검사.\n2026-09-29 사용자 지시: 대사에서 ASCII 마침표·느낌표 뒤의 일반 공백 제거.",
       "context": "script 118–131. 버드라몬 영입·엘리베이터·카드 상점, 모털몬 영입, 고래몬 의뢰와 산적, 프리지몬 구조·영입, 개굴몬 마을·안개 해제·수집 교환·낚시 안내. 새 용어와 말투는 검수 초안.",
       "baseline_sha256": "f962fc8ab9808dd17568b38770d2b101ed3d7b098ae6228779628e4191928d56",
-      "revision": 5,
-      "updated_at": "2026-09-29T04:29:35.107300+00:00",
-      "author": "assistant",
+      "revision": 6,
+      "updated_at": "2026-09-29T10:40:49.364727+00:00",
+      "author": "human",
       "wording_sha256": "ecd3bbe5595ecdf16b0fd9614f79632bd8f10c48191aa32444cb8587b8859dfe",
       "history": [
         {
@@ -119692,13 +119692,31 @@
           "runtime_verified": false,
           "source_control_difference": false,
           "source_controls_restored_in_draft": false
+        },
+        {
+          "text": "「OK.그럼 첫 일부터 해 볼까.⟦0D00⟧　날 붙잡아.」⟦0D00⟧",
+          "status": "draft",
+          "note": "",
+          "rationale": "원문·기존문 개별 대조. だか 계열 모털몬의 천진난만함, アル 카드상 말투, 영주와 부하의 관계·존비어를 보존하고 안내 오류 및 공백 수정.\n공백 검토: 일반 공백 6px, 원문 들여쓰기·연출/표 공백 12px, 쉼표·느낌표 뒤 공백 삭제.\n사용자 252px 정정: 168px 조정 전 문구·배치 복구. 이후 별도 줄바꿈 검사.\n2026-09-29 사용자 지시: 대사에서 ASCII 마침표·느낌표 뒤의 일반 공백 제거.",
+          "context": "script 118–131. 버드라몬 영입·엘리베이터·카드 상점, 모털몬 영입, 고래몬 의뢰와 산적, 프리지몬 구조·영입, 개굴몬 마을·안개 해제·수집 교환·낚시 안내. 새 용어와 말투는 검수 초안.",
+          "baseline_sha256": "f962fc8ab9808dd17568b38770d2b101ed3d7b098ae6228779628e4191928d56",
+          "revision": 5,
+          "updated_at": "2026-09-29T04:29:35.107300+00:00",
+          "author": "assistant",
+          "wording_sha256": "ecd3bbe5595ecdf16b0fd9614f79632bd8f10c48191aa32444cb8587b8859dfe",
+          "product_eligible": false,
+          "layout_verified": false,
+          "runtime_verified": false,
+          "source_control_difference": false,
+          "source_controls_restored_in_draft": false
         }
       ],
       "product_eligible": false,
       "layout_verified": false,
       "runtime_verified": false,
       "source_control_difference": false,
-      "source_controls_restored_in_draft": false
+      "source_controls_restored_in_draft": false,
+      "source_tokens_restored_in_draft": false
     },
     "dg-text-04e3c2": {
       "text": "버드라몬이 마을에 합류했다!!!⟦0D00⟧",

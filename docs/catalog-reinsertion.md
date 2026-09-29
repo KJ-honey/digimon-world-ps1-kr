@@ -31,7 +31,8 @@ python3 tools/dg_pixel_verify.py work/build/my-catalog
 
 | 종류 | 정책 | 현재 경계 |
 | --- | --- | --- |
-| 지명·아이템 설명 | 항목별 독립 CD record, 해당 포인터만 갱신 | 원래 문자열 길이와 무관. 한 행 252px 이내 |
+| 지명 | DG 초기 directory 예약 영역의 상주 byte-NUL 문자열 | 개별 원래 길이와 무관, 252px 이하. 설명 descriptor와 합계 2 KiB 이내 |
+| 아이템 설명 | 항목별 독립 CD record, 해당 포인터만 갱신 | 원래 문자열 길이와 무관. 한 행 252px 이내 |
 | 아이템·디지몬명 | 원래 레코드의 이름 필드 안에서 성장/축소 | NUL 포함 20 bytes, 현재 2-byte 단위 최대 9개 |
 
 **이름 필드 20 bytes를 넘는 재배치는 아직 지원하지 않는다.** 이 경계를 넘어 쓰면
@@ -40,7 +41,7 @@ python3 tools/dg_pixel_verify.py work/build/my-catalog
 기존보다 긴 이름은 필드 안에서 지원하되, 원문 길이 제한을 없앴다는 것과 레코드 제한을
 없앴다는 것을 구분한다. 후속에는 모든 복사 버퍼·UI/overlay 소비자와 참조를 조사해야 한다.
 
-포인터 항목은 같은 원문 주소를 공유해도 새 포인터와 CD record를 개별 배정한다.
+포인터 항목은 같은 원문 주소를 공유해도 새 포인터와 저장 영역을 개별 배정한다.
 원래 문자열은 바꾸지 않으므로 다른 별칭과 내부 참조를 훼손하지 않는다. 원래 공유 문자열을
 재활용 가능한 빈 공간으로 간주하지 않는다. 인라인 이름은 새 NUL 뒤의 잔여 bytes도 보존한다.
 
@@ -57,7 +58,8 @@ python3 tools/dg_pixel_verify.py work/build/my-catalog
   `0F01`은 6px로 작동한다. DG 문구의 원래 공백 인코딩 `0F00`은 그대로다.
 - 일반 렌더러 RAM `0x800A5B48..0x800A5BCB`(EXE 논리 `0x15B48..0x15BCB`)를
   132-byte 루프로 교체한다. 일반 글자는 원래 glyph uploader를 계속 사용한다.
-  `0F01`부터의 suffix만 기존의 정확한 픽셀 DG 행 렌더러로 전달한다. 홀수 주소도 byte
+  `0F01`부터의 suffix만 EXE 상주 dispatch를 통해 기존의 정확한 픽셀 DG 행 렌더러로 전달한다.
+  타이틀의 반각 공백은 DG directory 초기화를 요구하지 않는다. 홀수 주소도 byte
   load로 읽는다. 기존 4명령 alignment repair와 별도 중복 쓰기를 만들지 않는다.
 - `0F02 + little-endian u16 record index`는 포인터 항목용 descriptor이며 번역 인코딩에
   허용하지 않는다. 일반 문자열/이름에 descriptor를 복사하는 정책은 채택하지 않았다.
@@ -67,7 +69,7 @@ python3 tools/dg_pixel_verify.py work/build/my-catalog
 | 좌표 | 용도 |
 | --- | --- |
 | DG 논리 `0xC00` / RAM `0x80160384` | CD record를 읽고 일반 문자열을 표시하는 helper |
-| DG 논리 `0x1800..0x1FFF` / RAM `0x80160F84..0x80161783` | 4-byte descriptor 배열; 198개면 792 bytes |
+| DG 논리 `0x1800..0x1FFF` / RAM `0x80160F84..0x80161783` | 앞쪽 설명 descriptor 배열, 뒤쪽 지명 byte-NUL 문자열. 충돌 시 빌드 실패 |
 | `build.json`의 `catalog.bank_file_offset` | DG 대사 bank 뒤에 이어 붙인 카탈로그 record 시작 |
 | record 하나 | 2 KiB, byte-NUL 문자열 + 0 padding |
 
@@ -110,3 +112,32 @@ EDC/ECC, 변경하지 않은 모든 sector, 최종 재추출을 검증한다. �
 실행 증거는 각 빌드의 `catalog/cpu-verification.json`, `bank/cpu-verification.json`,
 `pixel-row/cpu-verification.json`과 `work/catalog-insert/`에 있다. 미추출 UI/overlay,
 카드·기술·곡·대회명은 계속 미해결이며 전체 게임 재삽입 완료로 보고하지 않는다.
+
+
+## 2026-09-29 타이틀 공백·지명 잘림 수정
+
+`menu_layout.py`가 타이틀 메뉴 포인터 8개(EXE 논리 `0xAA350..0xAA36F`)의
+단어 사이 `8140`을 `0F01`로 바꾼다. 커서 앞 여백 두 칸, NUL, 바이트 길이,
+내부 별칭은 보존한다. 타이틀 문구 전체의 번역 편집기 연결은 아직 미해결이다.
+
+기존 지명 포인터를 `0F02 + record index`로 바꾼 뒤, 맵 전환 callback RAM
+`0x800E424C`가 BIOS strlen을 호출해 3 bytes로 계산했다. 이후 `floor(3/2)*12`가
+12px가 되어 ‘시작의 마을’ 66px 중 첫 글자만 표시했다. glyph upload가 맞아도
+마지막 sprite의 폭이 틀릴 수 있으므로 이전 506개 upload 검사는 이 결함을 놓쳤다.
+
+callback의 EXE 논리 `0x54290..0x5430B`는 실제 픽셀 폭을 재고 중심점과 sprite 폭을
+함께 맞춘다. 70개 지명에 대해 원래 lookup/callback을 CPU로 실행해 두 값을 대조한다.
+지명 표의 다른 참조도 조사하여 RAM `0x800FE288/0x800FE2A4`의 strcpy/strlen과
+`0x8010E098/0x8010EE3C/0x8010FCB8`의 저장 라벨 복사를 확인했다. 따라서 폭 metadata만
+더하는 중간 실험(`menu-location-fix`)은 채택하지 않았다. 최종안은 지명 포인터를 실제
+상주 문자열로 유지한다. 변경된 53개 지명의 원래 strcpy/strlen과 18-byte 저장 라벨
+복사 함수를 CPU로 검증한다. 저장 화면의 기존 18-byte 표시 한도 자체를 확장한 것은 아니다.
+
+설명 descriptor와 지명 문자열은 예약 2 KiB의 양 끝에서 배정한다. 현재 115개 설명
+460 bytes + 53개 지명(정렬 포함 896 bytes)을 사용한다. 이 합계가 2 KiB를 넘는
+합성 최대길이 입력은 이제 빌드 오류다. 예전 stress-003 통과를 새 배치의 증거로 쓰지 않는다.
+CPU 검증은 여전히 CD/GPU/BIOS stub을 사용하며 실제 저장·재로드의 증거가 아니다.
+
+최종 ISO는 `work/build/full-development/dg-expanded.cue`이며 실제 콜드 부팅의 타이틀,
+두 이름 입력, 도입부 이후 ‘시작의 마을’ 전체 표시를 확인했다. 사용자도 정상 표시를
+확인했다. `menu-location-runtime.json`과 `work/map-location-final.png`에 증거를 남겼다.

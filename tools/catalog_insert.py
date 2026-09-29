@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Source-bound non-DG reinsertion, composed by dg_expand (development only).
 
-Pointer entries get independent CD records; their original strings stay intact.
+Locations stay resident C strings; descriptions get independent CD records.
+Their original strings stay intact.
 Inline records retain the established 20-byte field, including byte NUL. No
 numeric record data, shared original string, or authored review is overwritten.
 """
@@ -85,6 +86,7 @@ def prepare(exe, baseline, manifest, mapping):
     rows = {r['id']:r for r in baseline['entries']}
     writes, records, entries = [], [], []
     descriptors = bytearray(2048)
+    resident_cursor = len(descriptors)
     def write(key,at,value):
         writes.append(dict(id=key,file=EXE,file_offset=at,
                            before=exe[at:at+len(value)].hex(),after=value.hex()))
@@ -119,9 +121,20 @@ def prepare(exe, baseline, manifest, mapping):
             # Preserve all bytes after the new NUL, including numeric fields.
             write(key,at,new)
             entry.update(policy='inline-field',target_ram=RAM_BASE+at)
+        elif row['category']=='location_name':
+            # Locations also reach BIOS strcpy/strlen and save-label copies.
+            # Keep their pointers valid C strings, not renderer descriptors.
+            resident_cursor=(resident_cursor-len(new))&~1
+            if resident_cursor < len(records)*4:
+                raise ValueError('Resident location/catalog directory capacity exceeded')
+            descriptors[resident_cursor:resident_cursor+len(new)]=new
+            pointer=DESCRIPTOR_RAM+resident_cursor
+            write(key+'-pointer',loc['reference_logical_offset'],struct.pack('<I',pointer))
+            entry.update(policy='resident-directory-string',target_ram=pointer,
+                         directory_offset=0x1800+resident_cursor)
         else:
             index = len(records)
-            if (index+1)*4 > len(descriptors):
+            if (index+1)*4 > resident_cursor:
                 raise ValueError('Catalog descriptor region overflow')
             struct.pack_into('<HH',descriptors,index*4,0x020f,index)
             records.append(new.ljust(2048,b'\0'))
@@ -133,9 +146,11 @@ def prepare(exe, baseline, manifest, mapping):
         selected=len(manifest['edits']),changed=len(entries),unchanged=len(manifest['edits'])-len(entries),
         half_space_hex=HALF_SPACE.hex(),half_space_pixels=6,inline_field_bytes=INLINE_BYTES,
         descriptor_ram=DESCRIPTOR_RAM,descriptor_bytes=len(records)*4,
+        resident_location_bytes=len(descriptors)-resident_cursor,
         original_pointer_strings_preserved=True,shared_pointers_split_per_entry=True,
         runtime_verified=False,release_eligible=False,
         limitations=['Inline names exceeding 20 bytes including NUL require further consumer work',
+                     'Resident locations and description descriptors must share 2048 directory bytes',
                      '252px is renderer capacity, not verified window width',
                      'Pointer entries require DG directory initialization before display',
                      'CD streaming and all UI/overlay screens need gameplay verification'])
@@ -197,9 +212,12 @@ def verify_reinsertion(exe, dg, bank_offset, report, baseline, original):
                 if pointer!=entry['target_ram']:
                     raise ValueError('Catalog pointer target differs: '+row['id'])
                 descriptor=0x1800+pointer-DESCRIPTOR_RAM
-                if dg[descriptor:descriptor+4]!=struct.pack('<HH',0x020f,entry['record']):
-                    raise ValueError('Catalog descriptor differs: '+row['id'])
-                start=bank_offset+entry['record']*2048
+                if entry['policy']=='resident-directory-string':
+                    start=descriptor
+                else:
+                    if dg[descriptor:descriptor+4]!=struct.pack('<HH',0x020f,entry['record']):
+                        raise ValueError('Catalog descriptor differs: '+row['id'])
+                    start=bank_offset+entry['record']*2048
                 actual=dg[start:start+len(wanted)]
             else:
                 if pointer!=RAM_BASE+at:

@@ -1,6 +1,6 @@
 # Replacement for generic NUL text, at RAM 800A5B48 (132-byte extent).
 # Ordinary glyphs retain their original upload path. A non-NUL control lead
-# dispatches the suffix to the catalog helper, loaded with the DG directory.
+# dispatches the suffix through resident code; only CD descriptors need DG.
 # 0F01 is the sole authored control. 0F02 is a pointer-table descriptor.
 .set noreorder
 .set noat

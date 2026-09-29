@@ -320,12 +320,13 @@ def build(edits_path, output, expand_font=False, name_entry=False, catalog_edits
         changed,records,entries = prepare_bank(data,parsed,manifest['edits'],codec)
         catalog_records, descriptors, catalog_report = [], bytes(BLOCK), None
         if catalog_edits:
-            from catalog_insert import prepare, compile_renderer, HELPER_OFFSET
+            from catalog_insert import prepare
             catalog_writes,catalog_records,descriptors,catalog_report=prepare(
                 exe,catalog_baseline,catalog_manifest,mapping)
             writes.extend(catalog_writes)
-            if catalog_report['changed']:
-                writes.append(compile_renderer(exe,CODE_RAM+HELPER_OFFSET,output/'catalog'))
+        if expand_font:
+            from menu_layout import compile_layout
+            writes.extend(compile_layout(exe,pixel_report,output/'catalog'))
         if not expand_font:
             for entry in entries:
                 payload = bytes.fromhex(entry['expanded_hex'])
@@ -353,7 +354,7 @@ def build(edits_path, output, expand_font=False, name_entry=False, catalog_edits
                                'before':mirror[at:at+4].hex(), 'after':changed[at+0x800:at+0x804].hex()})
         writes.append(hook)
         # The catalog renderer contains byte loads and owns this whole function.
-        if not has_catalog:
+        if not expand_font:
             writes.append({'id':'alignment-repair','file':'SLPS_017.97','file_offset':OFFSET,
                            'before':BEFORE.hex(),'after':AFTER.hex()})
         plan,new_extent,metadata = image_plan(disc,table,writes,expanded_dg)

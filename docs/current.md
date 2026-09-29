@@ -1,5 +1,38 @@
 # 현재 상태
 
+**타이틀 반각 공백·맵 지명 잘림 수정 (2026-09-29):** 현재 통합 이미지는
+`work/build/full-development/dg-expanded.cue`, ISO SHA-256
+`ac94132e93ceeee7a65010a9da305cf08f01b19e11e737f0fa963fcc51857a47`이다.
+타이틀 메뉴 8개의 단어 사이 공백을 6px로 반영했다. 커서용 앞 여백은 유지한다.
+일반 공백 dispatch를 EXE에 상주시켜 DG 초기화 전 타이틀에서도 처리한다.
+
+지명 잘림 원인은 새 CD descriptor를 원래 `strlen` 경로가 3 bytes로 재고,
+화면 sprite를 12px로 잘라 표시한 것이었다. 수정 전 ‘시작의 마을’이 66px 대신
+12px로 계산되는 것을 CPU로 재현했다(70개 중 변경 53개 폭 불일치).
+지명을 DG 초기 directory의 실제 byte-NUL 문자열로 상주시켜 문자열 복사·저장 라벨
+소비자도 보존하고, 맵 표시 callback은 반각 공백을 포함한 실제 픽셀 폭과 중심점을 쓴다.
+폭 metadata만 추가한 중간안은 다른 strcpy 소비자를 해결하지 못해 폐기했다.
+설명 descriptor 460 bytes와 지명 896 bytes가 예약 2 KiB를 공유하며 초과 시 빌드 실패다.
+원본 지명 문자열과 별칭은 보존한다. 상세: [catalog-reinsertion.md](catalog-reinsertion.md).
+
+전체 Python 93개 통과 후 용량 초과 회귀 1개를 추가하여 카탈로그 테스트 7개를 통과했다.
+최종 이미지의 506개 카탈로그 픽셀, 308개 DG 명칭 복사, 70개 지명 sprite 폭·중앙 정렬,
+변경 지명 53개의 원래 strcpy/strlen·18-byte 저장 라벨 복사, DG 픽셀 및 2,350자 이름
+입력 CPU 회귀를 통과했다. 이 검사의 GPU/CD/BIOS는 stub이다.
+실제 Mednafen 콜드 부팅 → 타이틀/하위 메뉴 → 두 이름 입력 → 도입부 → 첫 맵 진입에서
+‘시작의 마을’ 전체 표시와 공백·정렬을 확인했다. RAM 포인터 `0x801353B0` →
+`0x8016153E`, 13 bytes가 최종 빌드와 일치한다. 다른 이미지 state 로드/RAM 주입은 없다.
+사용자도 화면을 보고 “잘 나온다. 문제없어보여”라고 확인했다. 입력 해제·일시정지 상태다.
+실제 저장/재로드 및 전체 맵 회귀 완료를 뜻하지 않는다.
+
+근거: `work/build/full-development/{catalog/cpu-verification.json,menu-location-runtime.json}`,
+`work/menu-title-final.png`, `work/map-location-final.png`, `work/map-location-final.mcs`.
+수정 전 이미지는 `work/build/full-development-before-menu-location/`에 보존했다.
+현재 검수 문구로 대사 4,413개와 카탈로그 269개 변경을 함께 빌드했다. 기존 ZIP은
+수정 전 배포물이므로 이번 변경을 담지 않는다. 아래 이전 ‘held로 빌드 중단’과
+‘지명은 독립 CD record’ 문단은 당시 기록이며 이 상태로 대체한다.
+
+
 **인용 대사 3줄 정리 (2026-09-29):** `「…」` 한 쌍으로 감싼 일반 DG 대사
 72개의 4줄 문구를 모두 3줄로 정리했다. 64개는 문구를 보존한 재배치,
 8개는 의미를 유지하며 수동으로 축약·배치했다. 원문 대조에서 3개 항목의

@@ -79,6 +79,54 @@ def check_pixels(machine,pointer,raw,glyphs,x=0):
     assert actual==expected,('pixel mismatch',hex(pointer),raw.hex(),x)
 
 
+def location_sprite_widths(exe,dg,baseline,changed):
+    """Execute the real map callback through its sprite call, not just upload."""
+    machine=CatalogRenderer(exe,dg)
+    bios_strings(machine)
+    sprites=[]
+    def capture(c,address,size,_):
+        if address==0x80103c84:
+            sprites.append(tuple(c.reg_read(r) for r in (UC_MIPS_REG_A1,UC_MIPS_REG_A3)))
+            c.reg_write(UC_MIPS_REG_PC,c.reg_read(UC_MIPS_REG_RA))
+    machine.cpu.hook_add(UC_HOOK_CODE,capture)
+    results=[]
+    for row in baseline['entries']:
+        if row['category']!='location_name':continue
+        entry=changed.get(row['id'])
+        raw=bytes.fromhex(entry['expanded_hex'] if entry else row['raw']['kor'])
+        width=pixel_width(raw)
+        c=machine.cpu
+        # Map 0's name index is a fixture; execute its original lookup path.
+        c.mem_write(0x13542b,bytes([row['table_index']]))
+        for r,v in [(UC_MIPS_REG_SP,0x801f0000),(UC_MIPS_REG_RA,0x80040000),
+                    (UC_MIPS_REG_A0,0),(UC_MIPS_REG_S0,0x12345678)]:c.reg_write(r,v)
+        c.emu_start(0x800e424c,0x80040000,count=10000)
+        assert c.reg_read(UC_MIPS_REG_PC)==0x80040000
+        assert c.reg_read(UC_MIPS_REG_SP)==0x801f0000
+        assert c.reg_read(UC_MIPS_REG_S0)==0x12345678
+        expected=((-12-width//2)&0xffffffff,width)
+        results.append(dict(id=row['id'],actual=list(sprites[-1]),expected=list(expected)))
+        if entry and entry['policy']=='resident-directory-string':
+            # Original location substitution: strcpy, strlen, then advance.
+            c.mem_write(0x60000,b'\xa5'*128)
+            c.reg_write(UC_MIPS_REG_S0,0x80060000)
+            c.reg_write(UC_MIPS_REG_S2,row['table_index'])
+            c.emu_start(0x800fe270,0x800fe2bc,count=10000)
+            assert bytes(c.mem_read(0x60000,len(raw)))==raw
+            assert c.reg_read(UC_MIPS_REG_S0)==0x80060000+len(raw)-1
+            # The three save-label callers use the same original bounded
+            # byte copy with a limit of 18. Preserve that existing policy.
+            c.mem_write(0x60000,b'\xa5'*32)
+            for reg,value in [(UC_MIPS_REG_A0,0x80060000),(UC_MIPS_REG_A1,entry['target_ram']),
+                              (UC_MIPS_REG_A2,18),(UC_MIPS_REG_RA,0x80040000)]:
+                c.reg_write(reg,value)
+            c.emu_start(0x80110d08,0x80040000,count=10000)
+            wanted=raw[:-1][:18]
+            assert bytes(c.mem_read(0x60000,len(wanted)+1))==wanted+b'\xa5'
+            results[-1]['native_copy_and_save_label']=True
+    return results
+
+
 def verify(build):
     report=json.loads((build/'build.json').read_text())
     disc=Disc(build/'dg-expanded.iso')
@@ -92,6 +140,8 @@ def verify(build):
     glyphs=dict(zip((s.lower() for s in oracle['codes']),oracle['rows']))
     baseline=json.loads((ROOT/'work/translation/catalog/baseline.json').read_text())
     changed={e['id']:e for e in report['catalog']['entries']}
+    sprite_cases=location_sprite_widths(exe,dg,baseline,changed)
+    assert all(r['actual']==r['expected'] for r in sprite_cases), sprite_cases
     machine=CatalogRenderer(exe,dg)
     cases=[]
     for row in baseline['entries']:
@@ -116,6 +166,15 @@ def verify(build):
         raw=bytes.fromhex('81410f0181410f01814100')
         machine.cpu.mem_write(0x50001,raw)
         check_pixels(machine,0x80050001,raw,glyphs,x)
+    # The title is reachable before the DG directory has been loaded.
+    from menu_layout import TITLE_POINTERS
+    from translation_catalog import read_string
+    machine.cpu.mem_write(0x15f784,bytes(0x2000))
+    for pointer in TITLE_POINTERS:
+        raw,_=read_string(exe,pointer-RAM_BASE,len(exe))
+        assert HALF_SPACE in raw
+        check_pixels(machine,pointer,raw,glyphs)
+        assert not machine.reads
     # Execute the real DG table-copy/length callers with C-string BIOS models.
     consumer=Consumer(exe);bios_strings(consumer)
     consumer.cpu.mem_write(0x13a924,exe[0xaa924:0xaa924+20])
@@ -136,6 +195,7 @@ def verify(build):
         dynamic.append(row['id'])
     result=dict(disc_sha256=report['output_sha256'],exe_sha256=sha(exe),
                 catalog_rendered=len(cases),cases=cases,dg_copy_cases=len(dynamic),
+                location_sprite_cases=sprite_cases,title_before_dg_cases=len(TITLE_POINTERS),
                 fixtures=len(fixtures)+4,all_pixels_match=True,abi_and_canaries=True,
                 existing_unsupplied_glyphs=sorted({bytes.fromhex(r['raw']['kor'])[i:i+2].hex()
                     for r in baseline['entries'] for i in range(0,len(bytes.fromhex(r['raw']['kor']))-1,2)
