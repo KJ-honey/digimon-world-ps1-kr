@@ -43,7 +43,7 @@ class TextBankTests(unittest.TestCase):
             validate_text(self.old,self.old+self.old,self.codec)
 
     def test_user_specified_ten_character_table_budgets(self):
-        for op in (0x08, 0x11, 0x12):
+        for op in (0x08, 0x11):
             with self.subTest(op=op):
                 old=bytes((op,0xf9))+bytes.fromhex('81410d000000')
                 self.assertEqual(validate_text(old,old,self.codec),[24])
@@ -56,6 +56,10 @@ class TextBankTests(unittest.TestCase):
         for op in (0x07, 0x09):
             old=bytes((op,0xf9))+bytes.fromhex('81410d000000')
             self.assertEqual(validate_text(old,old,self.codec),[22])
+
+    def test_korean_tournament_names_consume_ten_bytes(self):
+        old=bytes.fromhex('120381410d000000')
+        self.assertEqual(validate_text(old,old,self.codec),[14])
 
     def test_repeated_inline_name_insertions_use_actual_field_capacity(self):
         raw=bytes.fromhex('07f9076709c881410d000000')

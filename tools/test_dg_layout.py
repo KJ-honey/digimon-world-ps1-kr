@@ -28,12 +28,14 @@ class LayoutTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'264px'):
             validate_layout('⟦0500⟧⟦0600⟧'+'!'*10+LINE)
 
-    def test_inline_names_reserve_nine_cells_other_tables_ten(self):
+    def test_source_bound_names_and_remaining_ten_cell_tables(self):
         for op in ('07F9','09C8'):
             self.assertEqual(validate_layout('⟦'+op+'⟧가나다라'+LINE), [156])
-        for op in ('08F3','11F9','1203'):
+        for op in ('08F3','11F9'):
             self.assertEqual(validate_layout('⟦'+op+'⟧가나다라'+LINE), [168])
+        self.assertEqual(validate_layout('⟦1203⟧가나다라'+LINE), [108])
         self.assertEqual(validate_layout('「⟦09F9⟧를 정말 주는 거야?」'+LINE), [246])
+        self.assertEqual(validate_layout('「⟦010A⟧⟦0600⟧⟦0101⟧,『−⟦1203⟧−』에'+LINE), [216])
         self.assertEqual(line_widths('⟦1000⟧⟦0A00⟧'+LINE),[132])
 
     def test_unknown_controls_and_malformed_tokens_are_not_zero_width(self):

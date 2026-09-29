@@ -15,9 +15,11 @@ from dg_analyze import verified_texts
 from dg_build import sector_plan
 from dg_script import decode, text_tokens
 from dg_spacing import dialogue_codec, is_half_space
+from dg_dynamic_names import audit as audit_tournament_names
 from dg_control_restorations import restoration_allowed
 from dg_line_reflows import reflow_allowed
 from dg_layout import (DYNAMIC_BYTES, DYNAMIC_TABLE_MAX_CHARS, INLINE_NAME_MAX_CHARS,
+                       TOURNAMENT_NAME_MAX_CHARS,
                        DYNAMIC_TABLE_OPCODES, MAX_LINE_PIXELS, validate_encoded_layout)
 from dg_pixel_row import compile_pixel_row
 from font_expand import assemble, compile_font
@@ -284,6 +286,7 @@ def build(edits_path, output, expand_font=False, name_entry=False, catalog_edits
         table = disc.files()
         read = lambda name: disc.read(table[name]['lba'],table[name]['size'])
         data,exe,mirror = (read(n) for n in ('SCN/DG.SCN','SLPS_017.97','SCN/MAPHEAD.SCN'))
+        tournament_names = audit_tournament_names(exe, 'kor')
         if sha(data)!=manifest['source_dg_sha256'] or data[0x800:0x800+len(mirror)]!=mirror:
             raise ValueError('DG source binding/mirror differs')
         if MARKER in data:
@@ -382,6 +385,8 @@ def build(edits_path, output, expand_font=False, name_entry=False, catalog_edits
                 ff=table[filename]
                 if final.read(ff['lba'],ff['size'])!=expected:
                     raise ValueError('Final re-extraction differs: '+filename)
+            ff=table['SLPS_017.97']
+            audit_tournament_names(final.read(ff['lba'],ff['size']), 'kor')
             if catalog_report:
                 from catalog_insert import verify_reinsertion
                 ff=table['SLPS_017.97']
@@ -411,6 +416,8 @@ def build(edits_path, output, expand_font=False, name_entry=False, catalog_edits
                   'dynamic_table_max_characters':DYNAMIC_TABLE_MAX_CHARS,
                   'inline_name_max_characters':{'07':INLINE_NAME_MAX_CHARS,
                                                 '09':INLINE_NAME_MAX_CHARS},
+                  'tournament_name_max_characters':TOURNAMENT_NAME_MAX_CHARS,
+                  'tournament_name_audit':tournament_names,
                   'max_line_pixels':MAX_LINE_PIXELS,
                   'limitations':['protected streams require source-bound restoration/reflow rules', f'{MAX_LINE_PIXELS}px rows under declared dynamic budgets', 'dynamic table ceiling is user-specified, not independently measured',
                                  'extra synchronous CD read for each changed text',

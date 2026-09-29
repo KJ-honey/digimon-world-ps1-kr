@@ -9,6 +9,7 @@ MAX_LINE_PIXELS = 252
 DYNAMIC_TABLE_MAX_CHARS = 10
 DYNAMIC_TABLE_OPCODES = (0x07, 0x08, 0x09, 0x11, 0x12)
 INLINE_NAME_MAX_CHARS = 9  # 20-byte field: nine 2-byte units plus byte NUL.
+TOURNAMENT_NAME_MAX_CHARS = 5  # Source-bound Korean DG 12 table; dg_dynamic_names.audit.
 # RAM 800F44E0..4884 / digit loops 800F4F44: byte budgets for rendered
 # numeric fields and six-cell names. Table names use the user's ten-cell
 # ceiling (2026-09-28), not an exhaustive measurement of their source tables.
@@ -18,7 +19,8 @@ DYNAMIC_BYTES.update({op: 2 * DYNAMIC_TABLE_MAX_CHARS for op in DYNAMIC_TABLE_OP
 # 07 copies the digimon-name table and 09 copies the item-name table. Both
 # come from 20-byte inline fields; catalog reinsertion enforces this bound.
 DYNAMIC_BYTES.update({0x07: 2 * INLINE_NAME_MAX_CHARS,
-                      0x09: 2 * INLINE_NAME_MAX_CHARS})
+                      0x09: 2 * INLINE_NAME_MAX_CHARS,
+                      0x12: 2 * TOURNAMENT_NAME_MAX_CHARS})
 LINE = '⟦0D00⟧'
 ATOM = re.compile(r'⟦(?:G:)?[0-9A-F]{4,8}⟧|[^⟦⟧]')
 
