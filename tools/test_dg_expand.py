@@ -43,7 +43,7 @@ class TextBankTests(unittest.TestCase):
             validate_text(self.old,self.old+self.old,self.codec)
 
     def test_user_specified_ten_character_table_budgets(self):
-        for op in (0x07, 0x08, 0x09, 0x11, 0x12):
+        for op in (0x08, 0x11, 0x12):
             with self.subTest(op=op):
                 old=bytes((op,0xf9))+bytes.fromhex('81410d000000')
                 self.assertEqual(validate_text(old,old,self.codec),[24])
@@ -52,11 +52,18 @@ class TextBankTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError,'64-byte'):
                     validate_text(old,exact[:-4]+bytes.fromhex('8141')+exact[-4:],self.codec)
 
-    def test_repeated_table_insertions_each_consume_twenty_bytes(self):
+    def test_inline_name_tables_consume_eighteen_bytes(self):
+        for op in (0x07, 0x09):
+            old=bytes((op,0xf9))+bytes.fromhex('81410d000000')
+            self.assertEqual(validate_text(old,old,self.codec),[22])
+
+    def test_repeated_inline_name_insertions_use_actual_field_capacity(self):
         raw=bytes.fromhex('07f9076709c881410d000000')
-        self.assertEqual(validate_text(raw,raw,self.codec),[64])
+        self.assertEqual(validate_text(raw,raw,self.codec),[58])
+        exact=raw[:-4]+bytes.fromhex('8141')*3+raw[-4:]
+        self.assertEqual(validate_text(raw,exact,self.codec),[64])
         with self.assertRaisesRegex(ValueError,'64-byte'):
-            validate_text(raw,raw[:-4]+bytes.fromhex('8141')+raw[-4:],self.codec)
+            validate_text(raw,exact[:-4]+bytes.fromhex('8141')+exact[-4:],self.codec)
 
     def test_six_character_name_and_digit_budgets(self):
         old=bytes.fromhex('05000a0081410d000000')

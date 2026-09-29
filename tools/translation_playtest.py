@@ -13,7 +13,8 @@ from pathlib import Path
 from dg_analyze import read_source, verified_texts
 from dg_expand import DYNAMIC_TABLE_MAX_CHARS, validate_text
 from dg_script import decode, text_tokens
-from dg_layout import MAX_LINE_PIXELS, validate_layout, validate_encoded_layout
+from dg_layout import (INLINE_NAME_MAX_CHARS, MAX_LINE_PIXELS, validate_layout,
+                       validate_encoded_layout)
 from dg_spacing import dialogue_codec
 from survey import ROOT, SOURCES, sha, write_json
 from translation_review import Workspace, TOKEN, WORK
@@ -100,6 +101,8 @@ def export(directory, output, font_map, defer_failed=False):
                   changed=len(edits)-unchanged, deferred=deferred,
                   deferred_reason_counts=dict(Counter(e['reason'] for e in deferred)),
                   dynamic_table_max_characters=DYNAMIC_TABLE_MAX_CHARS,
+                  inline_name_max_characters={'07': INLINE_NAME_MAX_CHARS,
+                                              '09': INLINE_NAME_MAX_CHARS},
                   max_line_pixels=MAX_LINE_PIXELS,
                   dynamic_table_budget_basis='user-specified ceiling; not independently measured',
                   encoding_aliases=aliases, duplicate_hangul_policy='new 늪 uses 88C0; unchanged payload stays byte-identical',

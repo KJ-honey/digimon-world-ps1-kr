@@ -17,7 +17,7 @@ from dg_script import decode, text_tokens
 from dg_spacing import dialogue_codec, is_half_space
 from dg_control_restorations import restoration_allowed
 from dg_line_reflows import reflow_allowed
-from dg_layout import (DYNAMIC_BYTES, DYNAMIC_TABLE_MAX_CHARS,
+from dg_layout import (DYNAMIC_BYTES, DYNAMIC_TABLE_MAX_CHARS, INLINE_NAME_MAX_CHARS,
                        DYNAMIC_TABLE_OPCODES, MAX_LINE_PIXELS, validate_encoded_layout)
 from dg_pixel_row import compile_pixel_row
 from font_expand import assemble, compile_font
@@ -409,6 +409,8 @@ def build(edits_path, output, expand_font=False, name_entry=False, catalog_edits
                              'bytes_per_space':2,'renderer_code_changed':bool(pixel_report),
                              'pixel_row':pixel_report},
                   'dynamic_table_max_characters':DYNAMIC_TABLE_MAX_CHARS,
+                  'inline_name_max_characters':{'07':INLINE_NAME_MAX_CHARS,
+                                                '09':INLINE_NAME_MAX_CHARS},
                   'max_line_pixels':MAX_LINE_PIXELS,
                   'limitations':['protected streams require source-bound restoration/reflow rules', f'{MAX_LINE_PIXELS}px rows under declared dynamic budgets', 'dynamic table ceiling is user-specified, not independently measured',
                                  'extra synchronous CD read for each changed text',
