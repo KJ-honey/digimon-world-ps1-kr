@@ -47615,21 +47615,58 @@
     },
     "dg-text-01db0e": {
       "text": "⟦0107⟧???⟦0101⟧⟦0D00⟧「부탁해요~.」⟦0D00⟧",
-      "status": "draft",
+      "status": "accepted",
       "note": "",
       "rationale": "일본어 원문 대조 개별 번역. 반말/존댓말, 말버릇, 오역 및 띄어쓰기 수정. 승인 전 초안.",
       "context": "script 31–41 두리몬 합류, 고스몬 문답, 보이지 않는 다리, 절벽/엘리베이터와 우가몬 아지트 사건. 말장난과 화자 미확정 구절은 개별 근거에 표시.",
       "baseline_sha256": "5d2fbb3f98a5fa8d1de8b3e0e818fb1200ba1f46efaf80e3697608f35fc25912",
-      "revision": 1,
-      "updated_at": "2026-09-27T15:42:13.646674+00:00",
-      "author": "assistant",
+      "revision": 3,
+      "updated_at": "2026-09-29T04:39:00.901436+00:00",
+      "author": "human",
       "wording_sha256": "738434d310b18bc539299cde366af1f71b1de7222d76482d221f73cc7df27e46",
-      "history": [],
+      "history": [
+        {
+          "text": "⟦0107⟧???⟦0101⟧⟦0D00⟧「부탁해요~.」⟦0D00⟧",
+          "status": "draft",
+          "note": "",
+          "rationale": "일본어 원문 대조 개별 번역. 반말/존댓말, 말버릇, 오역 및 띄어쓰기 수정. 승인 전 초안.",
+          "context": "script 31–41 두리몬 합류, 고스몬 문답, 보이지 않는 다리, 절벽/엘리베이터와 우가몬 아지트 사건. 말장난과 화자 미확정 구절은 개별 근거에 표시.",
+          "baseline_sha256": "5d2fbb3f98a5fa8d1de8b3e0e818fb1200ba1f46efaf80e3697608f35fc25912",
+          "revision": 1,
+          "updated_at": "2026-09-27T15:42:13.646674+00:00",
+          "author": "assistant",
+          "wording_sha256": "738434d310b18bc539299cde366af1f71b1de7222d76482d221f73cc7df27e46",
+          "product_eligible": false,
+          "layout_verified": false,
+          "runtime_verified": false,
+          "source_control_difference": false,
+          "source_controls_restored_in_draft": false
+        },
+        {
+          "text": "⟦0107⟧???⟦0101⟧⟦0D00⟧「부탁함이에요~.」⟦0D00⟧",
+          "status": "accepted",
+          "note": "",
+          "rationale": "일본어 원문 대조 개별 번역. 반말/존댓말, 말버릇, 오역 및 띄어쓰기 수정. 승인 전 초안.",
+          "context": "script 31–41 두리몬 합류, 고스몬 문답, 보이지 않는 다리, 절벽/엘리베이터와 우가몬 아지트 사건. 말장난과 화자 미확정 구절은 개별 근거에 표시.",
+          "baseline_sha256": "5d2fbb3f98a5fa8d1de8b3e0e818fb1200ba1f46efaf80e3697608f35fc25912",
+          "revision": 2,
+          "updated_at": "2026-09-29T04:36:28.360885+00:00",
+          "author": "human",
+          "wording_sha256": "d03d2cf070be54393ce5a496d1d07e251f0c9dc67010f1de8d9d5547b6412ae2",
+          "product_eligible": false,
+          "layout_verified": false,
+          "runtime_verified": false,
+          "source_control_difference": false,
+          "source_controls_restored_in_draft": false,
+          "source_tokens_restored_in_draft": false
+        }
+      ],
       "product_eligible": false,
       "layout_verified": false,
       "runtime_verified": false,
       "source_control_difference": false,
-      "source_controls_restored_in_draft": false
+      "source_controls_restored_in_draft": false,
+      "source_tokens_restored_in_draft": false
     },
     "dg-text-01e0b8": {
       "text": "「응?너희 누구야?저리 가!」⟦0D00⟧",
@@ -95377,16 +95414,16 @@
       "source_controls_restored_in_draft": false
     },
     "dg-text-03a9ce": {
-      "text": "「쳇,방심했군.하지만 일 대 이는⟦0D00⟧　비겁하지 않냐?」⟦0D00⟧",
-      "status": "draft",
+      "text": "「쳇,방심했군.하지만 1대2는⟦0D00⟧　비겁하지 않냐?」⟦0D00⟧",
+      "status": "accepted",
       "note": "",
       "rationale": "일본어·기존 한국어를 개별 대조. 화자 어조와 안내 조건을 보존하고 띄어쓰기·의미 누락을 수정.\n공백 검토: 일반 공백 6px, 원문 들여쓰기·연출/표 공백 12px, 쉼표·느낌표 뒤 공백 삭제.\n사용자 252px 정정: 168px 조정 전 문구·배치 복구. 이후 별도 줄바꿈 검사.\n2026-09-29 사용자 지시: 대사에서 ASCII 마침표·느낌표 뒤의 일반 공백 제거.",
       "context": "script 86–98. 가루몬 결투 약속, 엔젤몬 각성의 고풍스러운 말투에서 존댓말로 전환, 얼음 훈련, 곤충 대회 접수 및 대회 설명. script 98의 미해결 6B 뒤를 포함한 전체 추출 완료 주장은 하지 않음.",
       "baseline_sha256": "2bfde19d1e7e8c1fb8b379a5186336af435e608c4027f2aa821776be49a440ff",
-      "revision": 5,
-      "updated_at": "2026-09-29T04:29:35.106318+00:00",
-      "author": "assistant",
-      "wording_sha256": "5215dae6faf5489912d805273c8ef6f7c0e3615e3a90ddf5ad199daabb5727f3",
+      "revision": 6,
+      "updated_at": "2026-09-29T04:41:19.387711+00:00",
+      "author": "human",
+      "wording_sha256": "cde436a05435ccfce05ce6f001a7408370e9d965f7a0c2e46d245bf2362aa461",
       "history": [
         {
           "text": "「쳇, 방심했군. 하지만 일 대 이는⟦0D00⟧ 비겁하지 않냐?」⟦0D00⟧",
@@ -95456,13 +95493,31 @@
           "runtime_verified": false,
           "source_control_difference": false,
           "source_controls_restored_in_draft": false
+        },
+        {
+          "text": "「쳇,방심했군.하지만 일 대 이는⟦0D00⟧　비겁하지 않냐?」⟦0D00⟧",
+          "status": "draft",
+          "note": "",
+          "rationale": "일본어·기존 한국어를 개별 대조. 화자 어조와 안내 조건을 보존하고 띄어쓰기·의미 누락을 수정.\n공백 검토: 일반 공백 6px, 원문 들여쓰기·연출/표 공백 12px, 쉼표·느낌표 뒤 공백 삭제.\n사용자 252px 정정: 168px 조정 전 문구·배치 복구. 이후 별도 줄바꿈 검사.\n2026-09-29 사용자 지시: 대사에서 ASCII 마침표·느낌표 뒤의 일반 공백 제거.",
+          "context": "script 86–98. 가루몬 결투 약속, 엔젤몬 각성의 고풍스러운 말투에서 존댓말로 전환, 얼음 훈련, 곤충 대회 접수 및 대회 설명. script 98의 미해결 6B 뒤를 포함한 전체 추출 완료 주장은 하지 않음.",
+          "baseline_sha256": "2bfde19d1e7e8c1fb8b379a5186336af435e608c4027f2aa821776be49a440ff",
+          "revision": 5,
+          "updated_at": "2026-09-29T04:29:35.106318+00:00",
+          "author": "assistant",
+          "wording_sha256": "5215dae6faf5489912d805273c8ef6f7c0e3615e3a90ddf5ad199daabb5727f3",
+          "product_eligible": false,
+          "layout_verified": false,
+          "runtime_verified": false,
+          "source_control_difference": false,
+          "source_controls_restored_in_draft": false
         }
       ],
       "product_eligible": false,
       "layout_verified": false,
       "runtime_verified": false,
       "source_control_difference": false,
-      "source_controls_restored_in_draft": false
+      "source_controls_restored_in_draft": false,
+      "source_tokens_restored_in_draft": false
     },
     "dg-text-03aa24": {
       "text": "「듣고 보니 그럴지도 모르겠네.」⟦0D00⟧「졌다고 핑계 대면 안 되지.」⟦0D00⟧",
@@ -95519,16 +95574,16 @@
       "source_controls_restored_in_draft": false
     },
     "dg-text-03aa66": {
-      "text": "「난 말이야,일 대 일이면 절대 안 져!」⟦0D00⟧",
-      "status": "draft",
+      "text": "「난 말이야,1대1이면 절대 안 져!」⟦0D00⟧",
+      "status": "accepted",
       "note": "",
       "rationale": "일본어·기존 한국어를 개별 대조. 화자 어조와 안내 조건을 보존하고 띄어쓰기·의미 누락을 수정.\n공백 검토: 일반 공백 6px, 원문 들여쓰기·연출/표 공백 12px, 쉼표·느낌표 뒤 공백 삭제.\n사용자 252px 정정: 168px 조정 전 문구·배치 복구. 이후 별도 줄바꿈 검사.",
       "context": "script 86–98. 가루몬 결투 약속, 엔젤몬 각성의 고풍스러운 말투에서 존댓말로 전환, 얼음 훈련, 곤충 대회 접수 및 대회 설명. script 98의 미해결 6B 뒤를 포함한 전체 추출 완료 주장은 하지 않음.",
       "baseline_sha256": "b1fab97890cec5dc50d77908a70a3051afc78d3950a4fcb5d869d64840d9a4d8",
-      "revision": 4,
-      "updated_at": "2026-09-28T07:46:27.618426+00:00",
-      "author": "assistant",
-      "wording_sha256": "1f8bf38167798760188ddd18a69eff2be4b5b978b4ca670aecc7a470fd81e55a",
+      "revision": 5,
+      "updated_at": "2026-09-29T04:41:25.647996+00:00",
+      "author": "human",
+      "wording_sha256": "ad5da41b6cd41804784e397ab7bc2d3892fa8985614b79dca5916856bb42cf71",
       "history": [
         {
           "text": "「난 말이야, 일 대 일이면 절대 안 져!」⟦0D00⟧",
@@ -95581,25 +95636,43 @@
           "source_control_difference": false,
           "source_controls_restored_in_draft": false,
           "source_tokens_restored_in_draft": false
+        },
+        {
+          "text": "「난 말이야,일 대 일이면 절대 안 져!」⟦0D00⟧",
+          "status": "draft",
+          "note": "",
+          "rationale": "일본어·기존 한국어를 개별 대조. 화자 어조와 안내 조건을 보존하고 띄어쓰기·의미 누락을 수정.\n공백 검토: 일반 공백 6px, 원문 들여쓰기·연출/표 공백 12px, 쉼표·느낌표 뒤 공백 삭제.\n사용자 252px 정정: 168px 조정 전 문구·배치 복구. 이후 별도 줄바꿈 검사.",
+          "context": "script 86–98. 가루몬 결투 약속, 엔젤몬 각성의 고풍스러운 말투에서 존댓말로 전환, 얼음 훈련, 곤충 대회 접수 및 대회 설명. script 98의 미해결 6B 뒤를 포함한 전체 추출 완료 주장은 하지 않음.",
+          "baseline_sha256": "b1fab97890cec5dc50d77908a70a3051afc78d3950a4fcb5d869d64840d9a4d8",
+          "revision": 4,
+          "updated_at": "2026-09-28T07:46:27.618426+00:00",
+          "author": "assistant",
+          "wording_sha256": "1f8bf38167798760188ddd18a69eff2be4b5b978b4ca670aecc7a470fd81e55a",
+          "product_eligible": false,
+          "layout_verified": false,
+          "runtime_verified": false,
+          "source_control_difference": false,
+          "source_controls_restored_in_draft": false
         }
       ],
       "product_eligible": false,
       "layout_verified": false,
       "runtime_verified": false,
       "source_control_difference": false,
-      "source_controls_restored_in_draft": false
+      "source_controls_restored_in_draft": false,
+      "source_tokens_restored_in_draft": false
     },
     "dg-text-03aa92": {
-      "text": "「일 대 일 결투를 신청한다!⟦0D00⟧　내일 16:00에 다시 여기로 와.⟦0D00⟧　이번엔 디지몬끼리만 싸우는 거야.」⟦0D00⟧",
-      "status": "draft",
+      "text": "「1대1결투를 신청한다!⟦0D00⟧　내일 16:00에 다시 여기로 와.⟦0D00⟧　이번엔 디지몬끼리만 싸우는 거야.」⟦0D00⟧",
+      "status": "accepted",
       "note": "",
       "rationale": "일본어·기존 한국어를 개별 대조. 화자 어조와 안내 조건을 보존하고 띄어쓰기·의미 누락을 수정.\n공백 검토: 일반 공백 6px, 원문 들여쓰기·연출/표 공백 12px, 쉼표·느낌표 뒤 공백 삭제.\n사용자 252px 정정: 168px 조정 전 문구·배치 복구. 이후 별도 줄바꿈 검사.",
       "context": "script 86–98. 가루몬 결투 약속, 엔젤몬 각성의 고풍스러운 말투에서 존댓말로 전환, 얼음 훈련, 곤충 대회 접수 및 대회 설명. script 98의 미해결 6B 뒤를 포함한 전체 추출 완료 주장은 하지 않음.",
       "baseline_sha256": "9da4c01cfae19fa36871bf6044ca266cf475147838b6a4797c4b2270c8528f3b",
-      "revision": 4,
-      "updated_at": "2026-09-28T07:46:27.618434+00:00",
-      "author": "assistant",
-      "wording_sha256": "003f2703bf8c0750b040df7e09a9461105157e0a4c261395dc2322ec3279b3e2",
+      "revision": 5,
+      "updated_at": "2026-09-29T04:41:33.507144+00:00",
+      "author": "human",
+      "wording_sha256": "d8631ac7e37e90577313aa5761ffb898ea34c6861a4905102650a002a8574e11",
       "history": [
         {
           "text": "「일 대 일 결투를 신청한다!⟦0D00⟧ 내일 16:00에 다시 여기로 와.⟦0D00⟧ 이번엔 디지몬끼리만 싸우는 거야.」⟦0D00⟧",
@@ -95652,13 +95725,31 @@
           "source_control_difference": false,
           "source_controls_restored_in_draft": false,
           "source_tokens_restored_in_draft": false
+        },
+        {
+          "text": "「일 대 일 결투를 신청한다!⟦0D00⟧　내일 16:00에 다시 여기로 와.⟦0D00⟧　이번엔 디지몬끼리만 싸우는 거야.」⟦0D00⟧",
+          "status": "draft",
+          "note": "",
+          "rationale": "일본어·기존 한국어를 개별 대조. 화자 어조와 안내 조건을 보존하고 띄어쓰기·의미 누락을 수정.\n공백 검토: 일반 공백 6px, 원문 들여쓰기·연출/표 공백 12px, 쉼표·느낌표 뒤 공백 삭제.\n사용자 252px 정정: 168px 조정 전 문구·배치 복구. 이후 별도 줄바꿈 검사.",
+          "context": "script 86–98. 가루몬 결투 약속, 엔젤몬 각성의 고풍스러운 말투에서 존댓말로 전환, 얼음 훈련, 곤충 대회 접수 및 대회 설명. script 98의 미해결 6B 뒤를 포함한 전체 추출 완료 주장은 하지 않음.",
+          "baseline_sha256": "9da4c01cfae19fa36871bf6044ca266cf475147838b6a4797c4b2270c8528f3b",
+          "revision": 4,
+          "updated_at": "2026-09-28T07:46:27.618434+00:00",
+          "author": "assistant",
+          "wording_sha256": "003f2703bf8c0750b040df7e09a9461105157e0a4c261395dc2322ec3279b3e2",
+          "product_eligible": false,
+          "layout_verified": false,
+          "runtime_verified": false,
+          "source_control_difference": false,
+          "source_controls_restored_in_draft": false
         }
       ],
       "product_eligible": false,
       "layout_verified": false,
       "runtime_verified": false,
       "source_control_difference": false,
-      "source_controls_restored_in_draft": false
+      "source_controls_restored_in_draft": false,
+      "source_tokens_restored_in_draft": false
     },
     "dg-text-03ab08": {
       "text": "「음,좋아.」⟦0D00⟧「귀찮은데…」⟦0D00⟧",
@@ -95768,16 +95859,16 @@
       "source_controls_restored_in_draft": false
     },
     "dg-text-03abc4": {
-      "text": "「도망치지 않고 오다니 기특하군.⟦0D00⟧　오늘은 약속대로 일 대 일이다!」⟦0D00⟧",
-      "status": "draft",
+      "text": "「도망치지 않고 오다니 기특하군.⟦0D00⟧　오늘은 약속대로 1대1이다!」⟦0D00⟧",
+      "status": "accepted",
       "note": "",
       "rationale": "일본어·기존 한국어를 개별 대조. 화자 어조와 안내 조건을 보존하고 띄어쓰기·의미 누락을 수정.\n공백 검토: 일반 공백 6px, 원문 들여쓰기·연출/표 공백 12px, 쉼표·느낌표 뒤 공백 삭제.\n사용자 252px 정정: 168px 조정 전 문구·배치 복구. 이후 별도 줄바꿈 검사.",
       "context": "script 86–98. 가루몬 결투 약속, 엔젤몬 각성의 고풍스러운 말투에서 존댓말로 전환, 얼음 훈련, 곤충 대회 접수 및 대회 설명. script 98의 미해결 6B 뒤를 포함한 전체 추출 완료 주장은 하지 않음.",
       "baseline_sha256": "51e401d7b1a6a85116c5a2ee1a48af06a0146946f0a4e91189f814324d3b6639",
-      "revision": 4,
-      "updated_at": "2026-09-28T07:46:27.618450+00:00",
-      "author": "assistant",
-      "wording_sha256": "a72c6a9fbcfba5eaa1d6a67b6bd0bd22ab072e4eab5f1531d70c9b97833c928d",
+      "revision": 5,
+      "updated_at": "2026-09-29T04:41:38.834737+00:00",
+      "author": "human",
+      "wording_sha256": "1809c37ce55e37045fed0e94c99db353d9778c88a94db6d5552d633b221dee73",
       "history": [
         {
           "text": "「도망치지 않고 오다니 기특하군.⟦0D00⟧ 오늘은 약속대로 일 대 일이다!」⟦0D00⟧",
@@ -95830,13 +95921,31 @@
           "source_control_difference": false,
           "source_controls_restored_in_draft": false,
           "source_tokens_restored_in_draft": false
+        },
+        {
+          "text": "「도망치지 않고 오다니 기특하군.⟦0D00⟧　오늘은 약속대로 일 대 일이다!」⟦0D00⟧",
+          "status": "draft",
+          "note": "",
+          "rationale": "일본어·기존 한국어를 개별 대조. 화자 어조와 안내 조건을 보존하고 띄어쓰기·의미 누락을 수정.\n공백 검토: 일반 공백 6px, 원문 들여쓰기·연출/표 공백 12px, 쉼표·느낌표 뒤 공백 삭제.\n사용자 252px 정정: 168px 조정 전 문구·배치 복구. 이후 별도 줄바꿈 검사.",
+          "context": "script 86–98. 가루몬 결투 약속, 엔젤몬 각성의 고풍스러운 말투에서 존댓말로 전환, 얼음 훈련, 곤충 대회 접수 및 대회 설명. script 98의 미해결 6B 뒤를 포함한 전체 추출 완료 주장은 하지 않음.",
+          "baseline_sha256": "51e401d7b1a6a85116c5a2ee1a48af06a0146946f0a4e91189f814324d3b6639",
+          "revision": 4,
+          "updated_at": "2026-09-28T07:46:27.618450+00:00",
+          "author": "assistant",
+          "wording_sha256": "a72c6a9fbcfba5eaa1d6a67b6bd0bd22ab072e4eab5f1531d70c9b97833c928d",
+          "product_eligible": false,
+          "layout_verified": false,
+          "runtime_verified": false,
+          "source_control_difference": false,
+          "source_controls_restored_in_draft": false
         }
       ],
       "product_eligible": false,
       "layout_verified": false,
       "runtime_verified": false,
       "source_control_difference": false,
-      "source_controls_restored_in_draft": false
+      "source_controls_restored_in_draft": false,
+      "source_tokens_restored_in_draft": false
     },
     "dg-text-03ac12": {
       "text": "「정해진 시간에 안 오다니,못된 녀석!⟦0D00⟧　그래도 나도 느긋하게 상처를 치료했으니⟦0D00⟧　봐주지.그럼 간다!」⟦0D00⟧",
@@ -96264,16 +96373,16 @@
       "source_controls_restored_in_draft": false
     },
     "dg-text-03add0": {
-      "text": "「알았어.도와줘도 좋지.⟦0D00⟧　우선 그 마을부터 가 봐야겠어.」⟦0D00⟧",
-      "status": "draft",
+      "text": "「알았어.협력해 주지.⟦0D00⟧　우선 그 마을부터 가 봐야겠어.」⟦0D00⟧",
+      "status": "accepted",
       "note": "",
       "rationale": "일본어·기존 한국어를 개별 대조. 화자 어조와 안내 조건을 보존하고 띄어쓰기·의미 누락을 수정.\n공백 검토: 일반 공백 6px, 원문 들여쓰기·연출/표 공백 12px, 쉼표·느낌표 뒤 공백 삭제.\n사용자 252px 정정: 168px 조정 전 문구·배치 복구. 이후 별도 줄바꿈 검사.\n2026-09-29 사용자 지시: 대사에서 ASCII 마침표·느낌표 뒤의 일반 공백 제거.",
       "context": "script 86–98. 가루몬 결투 약속, 엔젤몬 각성의 고풍스러운 말투에서 존댓말로 전환, 얼음 훈련, 곤충 대회 접수 및 대회 설명. script 98의 미해결 6B 뒤를 포함한 전체 추출 완료 주장은 하지 않음.",
       "baseline_sha256": "0c5cda0d61e17c2a43e58e21d5da4385d8d3d28e1660e818e100a4fdcbae613b",
-      "revision": 5,
-      "updated_at": "2026-09-29T04:29:35.106402+00:00",
-      "author": "assistant",
-      "wording_sha256": "cbe532c2e8eb4bf5df629dd41d822458255b2b35bf50f2c1ff74d1b9f182d797",
+      "revision": 6,
+      "updated_at": "2026-09-29T04:42:09.414299+00:00",
+      "author": "human",
+      "wording_sha256": "1cb5ea5a5e6850e4601027d500a027f375433fd215ad7228ef2b3f1faf2eeca2",
       "history": [
         {
           "text": "「알았어. 도와줘도 좋지.⟦0D00⟧ 우선 그 마을부터 가 봐야겠어.」⟦0D00⟧",
@@ -96343,13 +96452,31 @@
           "runtime_verified": false,
           "source_control_difference": false,
           "source_controls_restored_in_draft": false
+        },
+        {
+          "text": "「알았어.도와줘도 좋지.⟦0D00⟧　우선 그 마을부터 가 봐야겠어.」⟦0D00⟧",
+          "status": "draft",
+          "note": "",
+          "rationale": "일본어·기존 한국어를 개별 대조. 화자 어조와 안내 조건을 보존하고 띄어쓰기·의미 누락을 수정.\n공백 검토: 일반 공백 6px, 원문 들여쓰기·연출/표 공백 12px, 쉼표·느낌표 뒤 공백 삭제.\n사용자 252px 정정: 168px 조정 전 문구·배치 복구. 이후 별도 줄바꿈 검사.\n2026-09-29 사용자 지시: 대사에서 ASCII 마침표·느낌표 뒤의 일반 공백 제거.",
+          "context": "script 86–98. 가루몬 결투 약속, 엔젤몬 각성의 고풍스러운 말투에서 존댓말로 전환, 얼음 훈련, 곤충 대회 접수 및 대회 설명. script 98의 미해결 6B 뒤를 포함한 전체 추출 완료 주장은 하지 않음.",
+          "baseline_sha256": "0c5cda0d61e17c2a43e58e21d5da4385d8d3d28e1660e818e100a4fdcbae613b",
+          "revision": 5,
+          "updated_at": "2026-09-29T04:29:35.106402+00:00",
+          "author": "assistant",
+          "wording_sha256": "cbe532c2e8eb4bf5df629dd41d822458255b2b35bf50f2c1ff74d1b9f182d797",
+          "product_eligible": false,
+          "layout_verified": false,
+          "runtime_verified": false,
+          "source_control_difference": false,
+          "source_controls_restored_in_draft": false
         }
       ],
       "product_eligible": false,
       "layout_verified": false,
       "runtime_verified": false,
       "source_control_difference": false,
-      "source_controls_restored_in_draft": false
+      "source_controls_restored_in_draft": false,
+      "source_tokens_restored_in_draft": false
     },
     "dg-text-03ae5a": {
       "text": "가루몬이 마을에 합류했다!!!⟦0D00⟧",
@@ -133558,22 +133685,41 @@
       "source_controls_restored_in_draft": false
     },
     "dg-text-05a102": {
-      "text": "⟦0107⟧???⟦0101⟧⟦0D00⟧「어느 쪼오옥일까?」⟦0D00⟧",
-      "status": "draft",
+      "text": "⟦0107⟧???⟦0101⟧⟦0D00⟧「어느 쪼~~~옥일까?」⟦0D00⟧",
+      "status": "accepted",
       "note": "",
       "rationale": "각 원문·기존문을 대조해 장난감 말투·악역의 빈정거림·경비의 사무적 존댓말·대왕의 위엄을 구분. 진행 힌트, 문장 의미와 공백 복원.",
       "context": "script 132–146. 퍼펫몬 인형·장난감 마을·배드퍼펫몬, 공장 경비 교대 조건, 스카몬 대왕의 변신 및 카드 교환·훈련, 필드 조우. 신규 고유명은 기존 장면의 명칭을 우선한 검수 제안.",
       "baseline_sha256": "63a360b526168e753630eb802cd4a1b0da0e628ca367c8af4152a1771305d180",
-      "revision": 1,
-      "updated_at": "2026-09-27T16:21:29.905610+00:00",
-      "author": "assistant",
-      "wording_sha256": "4c270748b95c5cb99aa7397b2546760c2e9dcd5037dc8ce175723f434ba546e9",
-      "history": [],
+      "revision": 2,
+      "updated_at": "2026-09-29T04:37:06.056705+00:00",
+      "author": "human",
+      "wording_sha256": "ed3dc20f349ccfc753455c17354d881855ec24cfbe9fa42077a472f931135877",
+      "history": [
+        {
+          "text": "⟦0107⟧???⟦0101⟧⟦0D00⟧「어느 쪼오옥일까?」⟦0D00⟧",
+          "status": "draft",
+          "note": "",
+          "rationale": "각 원문·기존문을 대조해 장난감 말투·악역의 빈정거림·경비의 사무적 존댓말·대왕의 위엄을 구분. 진행 힌트, 문장 의미와 공백 복원.",
+          "context": "script 132–146. 퍼펫몬 인형·장난감 마을·배드퍼펫몬, 공장 경비 교대 조건, 스카몬 대왕의 변신 및 카드 교환·훈련, 필드 조우. 신규 고유명은 기존 장면의 명칭을 우선한 검수 제안.",
+          "baseline_sha256": "63a360b526168e753630eb802cd4a1b0da0e628ca367c8af4152a1771305d180",
+          "revision": 1,
+          "updated_at": "2026-09-27T16:21:29.905610+00:00",
+          "author": "assistant",
+          "wording_sha256": "4c270748b95c5cb99aa7397b2546760c2e9dcd5037dc8ce175723f434ba546e9",
+          "product_eligible": false,
+          "layout_verified": false,
+          "runtime_verified": false,
+          "source_control_difference": false,
+          "source_controls_restored_in_draft": false
+        }
+      ],
       "product_eligible": false,
       "layout_verified": false,
       "runtime_verified": false,
       "source_control_difference": false,
-      "source_controls_restored_in_draft": false
+      "source_controls_restored_in_draft": false,
+      "source_tokens_restored_in_draft": false
     },
     "dg-text-05a142": {
       "text": "「방금 목소리…배드퍼펫몬이냐!」⟦0D00⟧",
@@ -150986,16 +151132,16 @@
       "source_controls_restored_in_draft": false
     },
     "dg-text-06c864": {
-      "text": "「보거라,⟦0106⟧⟦0500⟧⟦0101⟧.⟦0D00⟧　나는 식당 주인 겸 주방장이⟦0D00⟧　되기로 했다.」⟦0D00⟧",
-      "status": "draft",
+      "text": "「이것 봐,⟦0106⟧⟦0500⟧⟦0101⟧.⟦0D00⟧　나는 식당 주인 겸 주방장이⟦0D00⟧　되기로 했다.」⟦0D00⟧",
+      "status": "accepted",
       "note": "",
       "rationale": "개별 원문·기존 번역 대조. 진화·번영·속성·훈련 설명의 의미와 수치, 각 상점 화자의 존비어 및 어미를 구별. 누락된 설명과 공백 복원.\n공백 검토: 일반 공백 6px, 원문 들여쓰기·연출/표 공백 12px, 쉼표·느낌표 뒤 공백 삭제.",
       "context": "script 156–161. 보관소, 마을 성장 안내, 식당 운영자별 인사, 아이템점 운영자별 말투와 조작 안내. 06f8a2는 원문 버튼 glyph 복원 지원 확인 후 별도 저장.",
       "baseline_sha256": "8df1b80db82958919cc3419905d8bde0c0db025471d899677262d20a5e90bd62",
-      "revision": 2,
-      "updated_at": "2026-09-27T18:00:12.650889+00:00",
-      "author": "assistant",
-      "wording_sha256": "1180d028bc2dfc372093022c20c290065df8e9acbb093914537e55f0d44a0fed",
+      "revision": 3,
+      "updated_at": "2026-09-29T04:42:40.213733+00:00",
+      "author": "human",
+      "wording_sha256": "751d9bfe3af83d1e85355694fea0f4ab50bd598bcd6312640c9312ad6c51d6df",
       "history": [
         {
           "text": "「보거라, ⟦0106⟧⟦0500⟧⟦0101⟧.⟦0D00⟧ 나는 식당 주인 겸 주방장이⟦0D00⟧ 되기로 했다.」⟦0D00⟧",
@@ -151013,13 +151159,31 @@
           "runtime_verified": false,
           "source_control_difference": false,
           "source_controls_restored_in_draft": false
+        },
+        {
+          "text": "「보거라,⟦0106⟧⟦0500⟧⟦0101⟧.⟦0D00⟧　나는 식당 주인 겸 주방장이⟦0D00⟧　되기로 했다.」⟦0D00⟧",
+          "status": "draft",
+          "note": "",
+          "rationale": "개별 원문·기존 번역 대조. 진화·번영·속성·훈련 설명의 의미와 수치, 각 상점 화자의 존비어 및 어미를 구별. 누락된 설명과 공백 복원.\n공백 검토: 일반 공백 6px, 원문 들여쓰기·연출/표 공백 12px, 쉼표·느낌표 뒤 공백 삭제.",
+          "context": "script 156–161. 보관소, 마을 성장 안내, 식당 운영자별 인사, 아이템점 운영자별 말투와 조작 안내. 06f8a2는 원문 버튼 glyph 복원 지원 확인 후 별도 저장.",
+          "baseline_sha256": "8df1b80db82958919cc3419905d8bde0c0db025471d899677262d20a5e90bd62",
+          "revision": 2,
+          "updated_at": "2026-09-27T18:00:12.650889+00:00",
+          "author": "assistant",
+          "wording_sha256": "1180d028bc2dfc372093022c20c290065df8e9acbb093914537e55f0d44a0fed",
+          "product_eligible": false,
+          "layout_verified": false,
+          "runtime_verified": false,
+          "source_control_difference": false,
+          "source_controls_restored_in_draft": false
         }
       ],
       "product_eligible": false,
       "layout_verified": false,
       "runtime_verified": false,
       "source_control_difference": false,
-      "source_controls_restored_in_draft": false
+      "source_controls_restored_in_draft": false,
+      "source_tokens_restored_in_draft": false
     },
     "dg-text-06c8b8": {
       "text": "「너희에게 내 불꽃 요리를 천천히⟦0D00⟧　맛보여 주마…후후후…」⟦0D00⟧",
