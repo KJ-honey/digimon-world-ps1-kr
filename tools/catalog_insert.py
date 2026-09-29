@@ -45,7 +45,8 @@ def encode_text(row, text, mapping):
             raise ValueError('Unsupported catalog glyph: '+code)
         if encoded[at] < 32 and code != '0F01':
             raise ValueError('DG/control bytes are not catalog glyphs')
-    return encoded + b'\0'
+    from technique_insert import encode_layout
+    return encode_layout(row, encoded + b'\0')
 
 
 def pixel_width(raw):
@@ -87,6 +88,12 @@ def prepare(exe, baseline, manifest, mapping):
     writes, records, entries = [], [], []
     descriptors = bytearray(2048)
     resident_cursor = len(descriptors)
+    from technique_insert import KINDS, validate as validate_technique, help_layout
+    selected = {e['id']:e for e in manifest['edits']}
+    technique_rows = [r for r in rows.values() if r['category'] in KINDS]
+    technique_raw = {r['id']:encode_text(r, selected[r['id']]['text'], mapping)
+                     if r['id'] in selected else bytes.fromhex(r['raw']['kor'])
+                     for r in technique_rows}
     def write(key,at,value):
         writes.append(dict(id=key,file=EXE,file_offset=at,
                            before=exe[at:at+len(value)].hex(),after=value.hex()))
@@ -112,12 +119,24 @@ def prepare(exe, baseline, manifest, mapping):
                                  f'field is {INLINE_BYTES} bytes. Record relocation is unresolved')
         except ValueError as exc:
             raise ValueError(key+': '+str(exc)) from exc
+        if row['category']=='technique_name':
+            continue  # Whole table is repacked atomically below.
         if new == old:
             continue
         entry = dict(id=key,category=row['category'],old_bytes=len(old),new_bytes=len(new),
                      pixel_width=width,expanded_hex=new.hex(),source_logical_offset=at,
                      source_reference_offset=loc['reference_logical_offset'])
-        if loc['reference_kind'] == 'record':
+        if row['category']=='technique_help':
+            validate_technique(row,new,old,pixel_width)
+            index=len(records)
+            if (index+1)*4>resident_cursor:
+                raise ValueError('Catalog descriptor region overflow')
+            struct.pack_into('<HH',descriptors,index*4,0x020f,index)
+            records.append(new.ljust(2048,b'\0'))
+            pointer=DESCRIPTOR_RAM+index*4
+            write(key+'-pointer',loc['reference_logical_offset'],struct.pack('<I',pointer))
+            entry.update(policy='independent-CD-record',record=index,target_ram=pointer)
+        elif loc['reference_kind'] == 'record':
             # Preserve all bytes after the new NUL, including numeric fields.
             write(key,at,new)
             entry.update(policy='inline-field',target_ram=RAM_BASE+at)
@@ -142,17 +161,32 @@ def prepare(exe, baseline, manifest, mapping):
             write(key+'-pointer',loc['reference_logical_offset'],struct.pack('<I',pointer))
             entry.update(policy='independent-CD-record',record=index,target_ram=pointer)
         entries.append(entry)
+    from technique_insert import repack_names
+    name_writes,name_entries,name_bytes=repack_names(exe,technique_rows,technique_raw,pixel_width)
+    writes.extend(name_writes)
+    entries.extend(name_entries)
+    wording_changed=sum(e.get('wording_changed',True) for e in entries)
+    help_writes,help_sprites=help_layout(exe,technique_rows,technique_raw,pixel_width)
+    writes.extend(help_writes)
     return writes,records,bytes(descriptors),dict(format=1,entries=entries,
-        selected=len(manifest['edits']),changed=len(entries),unchanged=len(manifest['edits'])-len(entries),
+        selected=len(manifest['edits']),changed=wording_changed,unchanged=len(manifest['edits'])-wording_changed,
         half_space_hex=HALF_SPACE.hex(),half_space_pixels=6,inline_field_bytes=INLINE_BYTES,
         descriptor_ram=DESCRIPTOR_RAM,descriptor_bytes=len(records)*4,
-        resident_location_bytes=len(descriptors)-resident_cursor,
-        original_pointer_strings_preserved=True,shared_pointers_split_per_entry=True,
+        resident_location_bytes=sum((e['new_bytes']+1)&~1 for e in entries
+                                    if e['category']=='location_name' and e['policy']=='resident-directory-string'),
+        resident_directory_string_bytes=len(descriptors)-resident_cursor,
+        resident_technique_bytes=name_bytes,technique_pool_capacity=0xA135C-0xA0BD4,
+        original_pointer_strings_preserved=not name_entries,
+        technique_help_sprites=help_sprites,
+        technique_help_icon_cells={'technique_help-003':8,'technique_help-004':11},
+        shared_pointers_split_per_entry=True,
         runtime_verified=False,release_eligible=False,
         limitations=['Inline names exceeding 20 bytes including NUL require further consumer work',
+                     'Technique names share a 1928-byte always-resident EXE pool',
+                     'Packed help rows retain original glyph counts and fragment anchors',
                      'Resident locations and description descriptors must share 2048 directory bytes',
                      '252px is renderer capacity, not verified window width',
-                     'Pointer entries require DG directory initialization before display',
+                     'Locations and CD descriptors require DG initialization; technique names do not',
                      'CD streaming and all UI/overlay screens need gameplay verification'])
 
 
@@ -212,7 +246,15 @@ def verify_reinsertion(exe, dg, bank_offset, report, baseline, original):
                 if pointer!=entry['target_ram']:
                     raise ValueError('Catalog pointer target differs: '+row['id'])
                 descriptor=0x1800+pointer-DESCRIPTOR_RAM
-                if entry['policy']=='resident-directory-string':
+                if entry['policy']=='resident-technique-pool':
+                    from technique_insert import POOL_START, POOL_END
+                    target=pointer-RAM_BASE
+                    if not POOL_START<=target<target+len(wanted)<=POOL_END:
+                        raise ValueError('Technique pointer outside resident pool')
+                    if exe[target:target+len(wanted)]!=wanted:
+                        raise ValueError('Technique re-extraction differs: '+row['id'])
+                    continue
+                elif entry['policy']=='resident-directory-string':
                     start=descriptor
                 else:
                     if dg[descriptor:descriptor+4]!=struct.pack('<HH',0x020f,entry['record']):

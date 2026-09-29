@@ -175,16 +175,49 @@ def verify(build):
         assert HALF_SPACE in raw
         check_pixels(machine,pointer,raw,glyphs)
         assert not machine.reads
+    from menu_layout import memory_card_writes
+    from dg_analyze import read_source
+    card_writes=memory_card_writes(read_source('kor')['SLPS_017.97'])
+    for write in card_writes:
+        raw=bytes.fromhex(write['after'])
+        at=write['file_offset']
+        assert exe[at:at+len(raw)]==raw
+        check_pixels(machine,RAM_BASE+at,raw,glyphs)
+        assert not machine.reads
+    technique_before_dg=[]
+    for row in baseline['entries']:
+        if row['category']!='technique_name':continue
+        entry=changed[row['id']]
+        raw=bytes.fromhex(entry['expanded_hex'])
+        check_pixels(machine,entry['target_ram'],raw,glyphs)
+        assert not machine.reads
+        technique_before_dg.append(row['id'])
+    card_consumer=Consumer(exe)
+    card_names=[]
+    def capture_card_name(c,address,size,_):
+        if address==0x800a5b48:
+            card_names.append(c.reg_read(UC_MIPS_REG_A0))
+            c.reg_write(UC_MIPS_REG_PC,c.reg_read(UC_MIPS_REG_RA))
+    c=card_consumer.cpu
+    c.hook_add(UC_HOOK_CODE,capture_card_name)
+    c.reg_write(UC_MIPS_REG_SP,0x801f0000)
+    c.mem_write(0x1f0028,struct.pack('<II',0,24))
+    for row in baseline['entries']:
+        if row['category']!='technique_name':continue
+        c.reg_write(UC_MIPS_REG_S0,row['table_index'])
+        c.emu_start(0x8010d1c8,0x8010d1ec,count=1000)
+        assert c.reg_read(UC_MIPS_REG_PC)==0x8010d1ec
+        assert card_names[-1]==changed[row['id']]['target_ram']
     # Execute the real DG table-copy/length callers with C-string BIOS models.
     consumer=Consumer(exe);bios_strings(consumer)
     consumer.cpu.mem_write(0x13a924,exe[0xaa924:0xaa924+20])
     consumer.cpu.mem_write(0x15f784,dg[:0x2000])
     dynamic=[]
     for row in baseline['entries']:
-        if row['category'] not in ('item_name','digimon_name'):continue
+        if row['category'] not in ('item_name','digimon_name','technique_name'):continue
         entry=changed.get(row['id'])
         raw=bytes.fromhex(entry['expanded_hex'] if entry else row['raw']['kor'])
-        op=9 if row['category']=='item_name' else 7
+        op={'item_name':9,'digimon_name':7,'technique_name':8}[row['category']]
         # The operand is a VM byte-variable index, not the table ID itself.
         consumer.cpu.mem_write((consumer.gp-0x6cec)&0x1fffff,struct.pack('<I',0x80070000))
         consumer.cpu.mem_write(0x70159,bytes((row['table_index'],)))
@@ -193,9 +226,49 @@ def verify(build):
         actual=bytes(consumer.cpu.mem_read(0x60000,len(raw)-1))
         assert actual==raw[:-1],(row['id'],actual.hex(),raw.hex())
         dynamic.append(row['id'])
+    # Execute the real help sprite callback, including the repeated button
+    # icons and the variable-width parenthesized legend suffixes.
+    help_cpu=Consumer(exe)
+    help_calls=[]
+    def capture_help(c,address,size,_):
+        if address!=0x80103c84:return
+        sp=c.reg_read(UC_MIPS_REG_SP)
+        x,y,width=[c.reg_read(r) for r in (UC_MIPS_REG_A1,UC_MIPS_REG_A2,UC_MIPS_REG_A3)]
+        height,u,v=struct.unpack('<III',c.mem_read((sp+16)&0x1fffff,12))
+        help_calls.append(dict(x=x if x<0x80000000 else x-0x100000000,
+                               y=y if y<0x80000000 else y-0x100000000,
+                               width=width,height=height,u=u,v=v))
+        c.reg_write(UC_MIPS_REG_PC,c.reg_read(UC_MIPS_REG_RA))
+    c=help_cpu.cpu
+    c.hook_add(UC_HOOK_CODE,capture_help)
+    c.reg_write(UC_MIPS_REG_SP,0x801f0000)
+    c.emu_start(0x800c3f2c,0x800c4150,count=10000)
+    assert c.reg_read(UC_MIPS_REG_PC)==0x800c4150
+    assert len(help_calls)==18
+    metadata=report['catalog']['technique_help_sprites']
+    for part in metadata:
+        if 'table_index' in part:
+            got=help_calls[4+part['table_index']]
+            assert (got['u'],got['width'],got['x'],got['y'],got['v']) == (
+                part['u'],part['width'],part['x'],part['y']+1,part['texture_y'])
+        elif part['field']=='screen_x':
+            assert help_calls[3]['x']==part['value']
+    # Every legend suffix and title is independently cropped from the same
+    # renderer output. Source U and width must match the emitted manifest.
+    immediate_calls={0x33f5c:(0,'width'),0x33f70:(1,'u'),0x33fb0:(2,'u'),
+                     0x33ff0:(3,'u'),0x340d8:(16,'u'),0x34104:(16,'width'),
+                     0x34118:(17,'u'),0x34144:(17,'width')}
+    for part in metadata:
+        if part.get('instruction_offset') in immediate_calls:
+            number,field=immediate_calls[part['instruction_offset']]
+            assert help_calls[number][field]==part['value']
     result=dict(disc_sha256=report['output_sha256'],exe_sha256=sha(exe),
                 catalog_rendered=len(cases),cases=cases,dg_copy_cases=len(dynamic),
                 location_sprite_cases=sprite_cases,title_before_dg_cases=len(TITLE_POINTERS),
+                technique_help_sprite_calls=help_calls,technique_dg_copy_cases=121,
+                memory_card_before_dg_cases=len(card_writes),
+                technique_before_dg_cases=len(technique_before_dg),
+                technique_card_consumer_cases=len(card_names),
                 fixtures=len(fixtures)+4,all_pixels_match=True,abi_and_canaries=True,
                 existing_unsupplied_glyphs=sorted({bytes.fromhex(r['raw']['kor'])[i:i+2].hex()
                     for r in baseline['entries'] for i in range(0,len(bytes.fromhex(r['raw']['kor']))-1,2)

@@ -3,6 +3,7 @@
 
 All manifests and the expanded font map are regenerated from the current
 reviews and immutable source assets. The previous output survives a failure.
+Includes memory-card spacing, technique-name C strings and help sprite crops.
 """
 import argparse
 import json
@@ -77,11 +78,18 @@ def build(output):
             if previous.exists():
                 previous.rename(output)
             raise
+        built = json.loads((output / 'build.json').read_text())
         return {'output': str(output / 'dg-expanded.cue'),
                 'sha256': result['output_sha256'],
-                'dialogue_changed': len(json.loads((output / 'build.json').read_text())['entries']),
+                'dialogue_changed': len(built['entries']),
                 'catalog_selected': result['catalog']['selected'],
-                'catalog_changed': result['catalog']['changed']}
+                'catalog_changed': result['catalog']['changed'],
+                'technique_names_changed': sum(e['category']=='technique_name' and e.get('wording_changed',True)
+                    for e in result['catalog']['entries']),
+                'technique_help_changed': sum(e['category']=='technique_help'
+                    for e in result['catalog']['entries']),
+                'memory_card_strings_changed': sum(w['id'].startswith('memory-card-spacing-')
+                    for w in built['writes'])}
 
 
 if __name__ == '__main__':
