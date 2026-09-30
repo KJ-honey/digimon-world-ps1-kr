@@ -12,6 +12,19 @@ from survey import SOURCES
 
 
 class UICatalogTests(unittest.TestCase):
+    def test_composite_legend_does_not_overlap_or_clip(self):
+        from technique_insert import legend_positions
+        # Reported regression: prefix [-102,96), suffix [66,126).
+        self.assertEqual(legend_positions(198,60),(-114,84,-132))
+        for prefix,suffix in [(168,60),(198,60),(198,72),(120,60)]:
+            x,suffix_x,icon_x=legend_positions(prefix,suffix)
+            self.assertEqual(suffix_x,x+prefix)
+            self.assertGreaterEqual(icon_x,-146)
+            self.assertLessEqual(icon_x+12,x)
+            self.assertLessEqual(suffix_x+suffix,146)
+        with self.assertRaisesRegex(ValueError,'Combined'):
+            legend_positions(216,72)
+
     @classmethod
     def setUpClass(cls):
         cls.inputs = {lang: read_source(lang)['SLPS_017.97'] for lang in SOURCES}

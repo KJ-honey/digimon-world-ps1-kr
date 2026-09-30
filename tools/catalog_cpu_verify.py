@@ -230,7 +230,17 @@ def verify(build):
     # icons and the variable-width parenthesized legend suffixes.
     help_cpu=Consumer(exe)
     help_calls=[]
+    legend_icons={}
     def capture_help(c,address,size,_):
+        if address in (0x800be9c8,0x800c5d30):
+            ra=c.reg_read(UC_MIPS_REG_RA)
+            if ra in (0x800c43c8,0x800c4408):
+                values=[c.reg_read(r) for r in (UC_MIPS_REG_A0,UC_MIPS_REG_A1,
+                                               UC_MIPS_REG_A2,UC_MIPS_REG_A3)]
+                values=[v if v<0x80000000 else v-0x100000000 for v in values]
+                legend_icons[ra]=dict(zip(('x','y','width','height'),values))
+            c.reg_write(UC_MIPS_REG_PC,ra)
+            return
         if address!=0x80103c84:return
         sp=c.reg_read(UC_MIPS_REG_SP)
         x,y,width=[c.reg_read(r) for r in (UC_MIPS_REG_A1,UC_MIPS_REG_A2,UC_MIPS_REG_A3)]
@@ -242,8 +252,8 @@ def verify(build):
     c=help_cpu.cpu
     c.hook_add(UC_HOOK_CODE,capture_help)
     c.reg_write(UC_MIPS_REG_SP,0x801f0000)
-    c.emu_start(0x800c3f2c,0x800c4150,count=10000)
-    assert c.reg_read(UC_MIPS_REG_PC)==0x800c4150
+    c.emu_start(0x800c3f2c,0x800c442c,count=10000)
+    assert c.reg_read(UC_MIPS_REG_PC)==0x800c442c
     assert len(help_calls)==18
     metadata=report['catalog']['technique_help_sprites']
     for part in metadata:
@@ -251,8 +261,17 @@ def verify(build):
             got=help_calls[4+part['table_index']]
             assert (got['u'],got['width'],got['x'],got['y'],got['v']) == (
                 part['u'],part['width'],part['x'],part['y']+1,part['texture_y'])
-        elif part['field']=='screen_x':
+        elif part.get('field')=='screen_x':
             assert help_calls[3]['x']==part['value']
+    # These suffixes are displayed after row 8, not after their source-row
+    # prefixes. Check actual composition independently of the build metadata.
+    for prefix_no,suffix_no,ra in ((13,16,0x800c43c8),(14,17,0x800c4408)):
+        prefix,suffix,icon=help_calls[prefix_no],help_calls[suffix_no],legend_icons[ra]
+        assert prefix['y']==suffix['y']==icon['y']+1
+        assert prefix['x']+prefix['width']==suffix['x'],(prefix,suffix)
+        assert suffix['x']+suffix['width']<=146
+        assert icon['x']>=-146 and icon['x']+icon['width']<=prefix['x']
+        assert (icon['width'],icon['height'])==(12,12)
     # Every legend suffix and title is independently cropped from the same
     # renderer output. Source U and width must match the emitted manifest.
     immediate_calls={0x33f5c:(0,'width'),0x33f70:(1,'u'),0x33fb0:(2,'u'),
@@ -266,6 +285,7 @@ def verify(build):
                 catalog_rendered=len(cases),cases=cases,dg_copy_cases=len(dynamic),
                 location_sprite_cases=sprite_cases,title_before_dg_cases=len(TITLE_POINTERS),
                 technique_help_sprite_calls=help_calls,technique_dg_copy_cases=121,
+                technique_legend_icons=legend_icons,technique_legend_compositions=2,
                 memory_card_before_dg_cases=len(card_writes),
                 technique_before_dg_cases=len(technique_before_dg),
                 technique_card_consumer_cases=len(card_names),

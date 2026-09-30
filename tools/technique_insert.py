@@ -103,8 +103,24 @@ def validate(row, raw, old, pixel_width):
             raise ValueError(row['id']+': technique-set instruction exceeds its sprite width')
 
 
+def legend_positions(prefix_width, suffix_width):
+    """Place the composite unavailable-technique legend inside [-146,146].
+
+    Its icon is 18px before the text. Move the whole group in half-cell steps
+    only when needed; never squeeze, overlap or clip either text fragment.
+    """
+    overflow=max(0,-102+prefix_width+suffix_width-146)
+    shift=((overflow+5)//6)*6
+    x=-102-shift
+    icon_x=x-18
+    suffix_x=x+prefix_width
+    if icon_x < -146 or suffix_x+suffix_width>146:
+        raise ValueError('Combined technique legend exceeds screen slot')
+    return x,suffix_x,icon_x
+
+
 def help_layout(exe, rows, wanted, pixel_width):
-    """Recompute texture U and crop width; screen positions remain fixed.
+    """Recompute texture crops and composite legend/button positions.
 
     The original table's last slices in rows 2/3 omit a Korean final glyph.
     Their right boundary is the NUL, not the shorter Japanese crop width.
@@ -140,9 +156,15 @@ def help_layout(exe, rows, wanted, pixel_width):
         if u+width>252:
             raise ValueError('Technique-help fragment outside texture')
         return u,width
+    # Rows 9/10 reuse row 8's full prose, followed by the parenthesized
+    # suffixes from rows 6/7. They are NOT paired with those rows' prefixes.
+    legends={index:legend_positions(pixel_width(raws[8]),crop(index,1,None)[1])
+             for index in (6,7)}
     for table_index,index,first,last in SLICES:
         at=0xA019C+table_index*8
         x,y,old_width,old_u,v=struct.unpack_from('<hhhBB',exe,at)
+        if table_index in (9,10):
+            x=legends[6 if table_index==9 else 7][0]
         u,width=crop(index,first,last)
         # The inner help panel spans [-146,146]. Adjacent independent pieces
         # retain their source anchors; reject growth into a neighbour/icon.
@@ -190,4 +212,17 @@ def help_layout(exe, rows, wanted, pixel_width):
         writes.append(dict(id='technique-help-confirmation-x',file='SLPS_017.97',
                            file_offset=at,before=old.hex(),after=new.hex()))
     evidence.append(dict(instruction_offset=at,field='screen_x',value=value,help_index=4))
+    for index,suffix_at,icon_at in ((6,0x340FC,0x343B0),(7,0x3413C,0x343F0)):
+        x,suffix_x,icon_x=legends[index]
+        for at,value,expected in ((suffix_at,suffix_x,0x24050042),(icon_at,icon_x,0x2404ff88)):
+            before=exe[at:at+4]
+            if before!=struct.pack('<I',expected):
+                raise ValueError('Technique legend screen-position instruction differs')
+            after=struct.pack('<I',(expected&0xffff0000)|(value&0xffff))
+            if before!=after:
+                writes.append(dict(id=f'technique-legend-position-{at:06x}',file='SLPS_017.97',
+                                   file_offset=at,before=before.hex(),after=after.hex()))
+        evidence.append(dict(legend_suffix=index,prefix_index=8,x=x,suffix_x=suffix_x,
+                             icon_x=icon_x,prefix_width=pixel_width(raws[8]),
+                             suffix_width=crop(index,1,None)[1]))
     return writes,evidence
