@@ -257,9 +257,9 @@ def verify_reinsertion(exe, dg, bank_offset, report, baseline, original):
                 elif entry['policy']=='resident-directory-string':
                     start=descriptor
                 else:
-                    if dg[descriptor:descriptor+4]!=struct.pack('<HH',0x020f,entry['record']):
+                    if dg[descriptor:descriptor+4]!=struct.pack('<HH',0x020f,entry.get('packed_offset',entry['record'])):
                         raise ValueError('Catalog descriptor differs: '+row['id'])
-                    start=bank_offset+entry['record']*2048
+                    start=bank_offset+entry.get('packed_offset',entry['record']*2048)
                 actual=dg[start:start+len(wanted)]
             else:
                 if pointer!=RAM_BASE+at:

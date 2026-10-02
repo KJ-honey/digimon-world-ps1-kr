@@ -150,7 +150,7 @@ def verify(build):
         pointer=(struct.unpack_from('<I',exe,loc['reference_logical_offset'])[0]
                  if loc['reference_kind']=='u32_ram_pointer' else RAM_BASE+loc['logical_offset'])
         check_pixels(machine,pointer,raw,glyphs)
-        expected_reads=([report['catalog']['bank_file_offset']+entry['record']*2048]
+        expected_reads=([report['catalog']['bank_file_offset']+(entry.get('packed_offset',entry['record']*2048)//2048)*2048]
                         if entry and entry['policy']=='independent-CD-record' else [])
         assert machine.reads==expected_reads
         cases.append(dict(id=row['id'],pointer=pointer,bytes=len(raw),pixels=pixel_width(raw)))
