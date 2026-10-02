@@ -1,5 +1,103 @@
 # 현재 상태
 
+**사용자 원본 비교 및 현재 수정분 채택 (2026-10-03):**
+사용자가 할배몬 대사의 프리즈를 원본에서도 확인했다. 따라서 남은 할배몬 프리즈를
+이번 대사 확장이 새로 만든 결함으로 단정하지 않는다. 원본과 수정본의 지연 시간 차이는
+계측하지 않았으며, 훈련장 간판의 최신 수정본에 대한 체감 결과는 별도 미확인이다.
+사용자는 추가 동작 변경 없이 현재 수정분을 커밋하고 main에 병합하도록 요청했다.
+대사 상주화, 원래 DG 디스크 위치 유지, 훈련 overlay의 메모리 파일표 조회를 채택하며,
+이는 모든 장소의 프리즈 해소나 게임 전체 검증 완료를 뜻하지 않는다.
+
+**훈련장 간판 후속: 비동기 요청의 CD 파일 검색 제거 (2026-09-30, interaction-latency-003):**
+사용자는 직전 `original-dg-extent` 판에서 **훈련장 간판 프리즈는 그대로**,
+**할배몬 프리즈는 사라졌지만 대사 넘김은 조금 느린 느낌**이라고 보고했다.
+따라서 디스크 위치 복구만으로 간판 문제는 해결되지 않았다. 할배몬의 느림은
+버튼 이후 다음 대사 시작 지연인지, 글자 출력 속도인지 아직 구분되지 않았다.
+이번 수정은 훈련장 경로만 바꾸며 할배몬 전환 지연의 원인/해소는 미해결이다.
+
+새 확인용 이미지는 `work/build/training-cached-location/dg-expanded.cue`, ISO SHA-256
+`b229dbab50a1e050a683f14e0d6c3533c97ad669ef85f5ad02877fab22b81841`이다.
+**CD 파일 검색 호출을 제거한 개발 수정본이며 실제 간판 프리즈 해소는 사용자 확인 전이다.**
+사용자의 검증 인계를 유지해 에뮬레이터는 조작하지 않았다. 직전 이미지는 보존했다.
+
+RAM `801044AC`의 비동기 overlay 경로는 `80100B60` → `80100BB8`로 요청하면서
+파일 길이 `-1`을 넣는다. 큐 처리 `801008C0`는 길이가 음수이면 `80100990`에서
+`800B6964`(CdSearchFile)를 호출한 뒤 읽기를 시작한다. 원래부터 존재하는 경로다.
+한편 게임은 RAM `80125E18`의 파일 표와 `800A4444`로 메모리에서 파일 위치와
+크기를 구할 수 있다. `TRN_REL.BIN`/`TRN2_REL.BIN` 표의 ISO LBA 147926/147942와
+길이 32316/25360이 실제 ISO 파일표와 일치함을 빌드 시 강제한다.
+
+`training_load.py/.s`는 DG opcode `64 27`의 call 한 곳(RAM `800EE45C`,
+EXE 논리 `0x5E45C`)만 기존 상주 helper 영역으로 연결한다. 원래 map 분기 함수를
+복사하고 그 안의 overlay 요청 두 곳만 RAM 조회 helper로 바꾼다. 조회에 성공하면
+기존 큐에 CdlLOC와 정확한 파일 길이를 전달하고, 실패하면 원래 요청 함수로 복귀한다.
+파일·목적 RAM `80088800`·상태 byte·callback·큐 순서·비동기 poll·오류 재시도는 유지한다.
+전역 로더와 DG 초기화 이전의 호출 경로는 수정하지 않는다. helper는 DG 논리
+`0xA00..0xB6F`(RAM `80160184..801602F3`)의 기존 빈 공간을 사용하며 새 RAM 예약은 없다.
+전체 빌드와 `--original-dg-extent` 경로에 연결했고 원래 함수/빈 공간/파일표가 다르면
+빌드를 거부한다. 이 파일 검색이 사용자가 본 프리즈의 원인인지는 실측하지 않았다.
+
+검증: 실제 설치된 call → map 분기 → RAM 조회 → 큐 등록 → 큐 처리를 CPU 실행했다.
+256개 map 값 중 훈련 요청 7개에서 기존 CD 검색 1회/수정 후 0회, 같은 위치·sector 수,
+Setloc busy·Read 실패·poll busy·읽기 오류 재시도와 완료 상태 일치를 확인했다.
+파일표 조회 실패 2개는 원래 CD 검색으로 정상 복귀하며, 두 요청의 큐 연결/완료 순서와
+callee-saved register·상주 영역 guard를 확인했다. CD와 BIOS는 stub이므로 시간 측정은 아니다.
+전체 이미지 diff/sector/재추출, 기존 Python 108개, 대사 4413개/연속 대사 608개,
+catalog 637개 및 관련 소비자, script loader 468개 CPU 검증도 통과했다.
+직전 이미지와 번역 record·파일표는 동일하고 차이는 EXE hook 3 bytes와 DG helper 232 bytes다.
+근거: `work/interaction-latency-003/`, 새 빌드의 `bank/training-load-verification.json`.
+이번 후속 수정과 앞선 디스크 위치 복구는 2026-10-03 사용자 요청으로 함께 커밋한다.
+
+**상호작용 진입 지연 후속: DG 원래 디스크 위치 복구 (2026-09-29, interaction-latency-002):**
+할배몬·훈련장에 말을 거는 순간의 프리즈 보고에 따라 코드와 디스크 배치를 조사했다.
+새 수정본은 `work/build/original-dg-extent/dg-expanded.cue`, ISO SHA-256
+`b2f786ae478b8ad8252c2fa0f8908c707cf0c8433a47a4c1cf42a9d04a3c5dcb`이다.
+**늘어난 CD 탐색 거리를 제거한 개발 수정본이다. 후속 사용자 보고에서 할배몬 프리즈는
+사라졌으나 훈련장 간판 프리즈는 남았다. 상세 상태는 위 2026-09-30 기록을 따른다.**
+사용자가 게임 검증을 맡는다는 기존 지시를 유지하여 이번에는 에뮬레이터를 조작하지 않았다.
+반복 상호작용마다 재현되는지, 맵 진입 뒤 첫 상호작용에만 재현되는지에 대한 질문은
+아직 답변이 없다. 원본 대비 시간 계측·실제 CD seek 재현도 수행하지 않았다.
+
+확인한 코드 경로: `800F0988`은 script 0에 MAPHEAD RAM을 반환하고, 현재 일반 script와
+같은 ID이면 캐시를 반환하며, 다른 ID이면 동기 `800EC21C`를 호출한다. 할배몬 공통
+script 178은 script 149/150/163의 `17` 분기에서 선택된다. 예: DG 논리 `0x65832`의
+`17 00 B2 00 37 00`은 script 178/section 55다. 훈련장 script 104/section 81은
+DG 논리 `0x4503E`에서 `64 27`을 실행한다. 해당 dispatch는 RAM `800EE458` →
+`800E43C4` → 조건에 따라 `801044AC`로 훈련 overlay 10/13을 요청한다.
+이들은 각각 `TRN_REL.BIN`, `TRN2_REL.BIN`이다. 경로 존재는 정적 확인이며 사용자가
+관찰한 프레임의 실제 호출을 포착한 것은 아니다. 원래 게임도 갖고 있던 로드 경로다.
+
+앞선 resident-dialogue 판은 원본 DG ISO LBA 142262를 LBA 162058로 옮기고 내부
+script 논리 offset에도 0x1800을 더했다. 이번에는 기존 위치·파일 크기 692,224 bytes·
+원래 226칸 경계표를 유지한다. 일반 script의 물리 위치는 앞선 판보다 19,799섹터 앞이다.
+훈련 overlay ISO LBA 147926/147942 등 다른 파일 위치는 그대로다.
+이 변경은 확장 때문에 증가한 탐색 부담을 제거한다. 원래 로딩의 소요 시간이나
+두 장소의 멈춤이 완전히 사라진다는 의미는 아니다.
+
+`dg_disk_layout.py`가 DG의 **런타임에 사용하지 않는 script-0 디스크 사본** 일부를
+초기 helper/scratch/명칭 및 packed 설명 영역으로 쓴다. script 0의 실제 공급자는
+별도 MAPHEAD이고 그 파일에는 완전한 수정 script와 resident pool을 유지한다.
+원본의 EXE·모든 `_REL.BIN`에서 `800EC21C` 직접 jump/call은 EXE의 초기 directory
+로드 `800F007C`와 일반 script 로드 `800F0A20` 두 곳이다. 간접 호출 전수 증거와는
+구분한다. 원래 로더 코드는 바꾸지 않는다. 초기 8 KiB 읽기와 일반 script 첫 위치
+DG 논리 `0x6800`을 그대로 사용하며, 이 사이 `0x2000..0x67FF`에 설명을 넣는다.
+현재 125개 설명 3,757 bytes를 정렬·sector 경계에 맞춰 4,096 bytes에 담았다.
+각 문구는 한 sector 안에 들어간다. descriptor u16을 bank 상대 byte offset으로 바꾸고,
+CD helper는 해당 sector를 읽은 뒤 sector 내 위치를 더한다. 기존 2 KiB 스택 버퍼를
+사용한다. 일반 script offset·새 RAM 할당·번역 내용·다른 파일 extent 변경은 없다.
+예약 18 KiB 초과 시 빌드 오류다. 이 정책은 `build_full.py`에 연결했고 개별 빌드는
+`--resident-dialogue --original-dg-extent`로 선택한다. 기존 append 경로도 남아 있다.
+
+검증: 최종 전체 image diff/sector 무결성/재추출 및 원본 ISO 파일표·전체 길이 일치,
+225개 script와 반복·script-0 교차·149↔178/150↔178/104 복귀를 포함한 468개
+실제 loader CPU 경우에서 공급 byte·캐시·ABI·directory/VM guard 보존을 확인했다.
+대사 4,413개의 내용·폭·608개 연속 대사 상태·VM 복귀 및 대사 CD 읽기 0회,
+카탈로그 637개 픽셀/관련 소비자, Python 108개 테스트를 통과했다.
+CPU의 CD/GPU/BIOS는 stub이다. 앞선 판과 대사/카탈로그 최종 문구 byte도 전부 같다.
+증거: `work/interaction-latency-002/`, 새 빌드의 `build.json`,
+`bank/{cpu-verification.json,loader-verification.json}`, `catalog/cpu-verification.json`.
+이전 `resident-dialogue` 이미지는 보존했다. 이번 후속 변경은 위 2026-10-03 채택 범위에 포함된다.
+
 **대사 전환 추가 CD 읽기 제거 개발판 (2026-09-29, dialogue-latency-001):**
 사용자가 대사 확장 후 매번 넘길 때 약 0.1초의 짧은 멈춤을 보고했다.
 기존 `dg_bank.s`는 변경 대사마다 `800EC21C`의 동기 CD 읽기를 호출한다.

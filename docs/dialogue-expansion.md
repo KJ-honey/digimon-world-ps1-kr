@@ -4,6 +4,37 @@
 `dg_export.py`의 기존 manifest를 그대로 입력하며, 원문 payload 길이와 번역 길이가
 달라도 빌드한다. 미확인 후보를 실행 대사로 승격하지 않는다.
 
+## 원래 디스크 위치 유지 (2026-09-29 후속)
+
+통합 빌드는 RAM 상주 대사와 `--original-dg-extent`를 함께 사용한다.
+DG를 append하지 않고 원래 ISO LBA·파일 크기·경계표를 유지한다. script 0은 원래
+로더가 MAPHEAD에서 공급하므로 DG 안의 중복 script-0 디스크 영역을 재사용한다.
+첫 8 KiB의 helper/scratch/명칭 배치는 유지하고, `0x2000..0x67FF`에 카탈로그 문구를
+sector 단위로 묶는다. 일반 script 1부터의 논리 offset은 원본과 동일하다.
+카탈로그 descriptor는 u16 byte offset을 담으며 각 문구는 한 sector 안에 들어간다.
+CD helper는 sector offset과 sector 내 offset을 분리하여 기존 스택 버퍼에서 표시한다.
+
+`dg_loader_verify.py work/build/original-dg-extent`로 원래 loader의 실제 명령을 실행해
+모든 script 선택, 캐시 hit, MAPHEAD 공급, 교차 호출/복귀를 검사한다. CD는 stub이다.
+이 변경은 확장 때문에 멀어진 디스크 위치를 복구한다. 원래 게임의 script/overlay
+읽기 자체를 제거하지는 않으며 체감 효과는 별도 확인한다. 아래 append 설명과
+script offset `+0x1800`은 재현용 이전 경로에만 적용된다.
+
+## 훈련장 비동기 파일 위치 조회 (2026-09-30 후속)
+
+현재 `--original-dg-extent` 경로는 `training_load.py/.s`도 설치한다.
+훈련 overlay의 비동기 요청이 파일 길이 `-1`로 큐에 들어가면 원래 큐 처리기는
+CdSearchFile로 파일 위치를 검색한다. DG opcode `64 27`의 호출만 RAM 조회 경로로
+연결해 기존 파일표의 CdlLOC·정확한 길이를 같은 큐에 전달한다. 조회 실패 시에는
+원래 로더로 복귀한다. overlay 자체의 CD 읽기·상태·완료 대기는 기존과 같다.
+map 분기 원본의 복사와 새 helper는 DG helper sector의 빈 `+0x200..+0x3FF` 안에
+들어가며 catalog helper `+0x400`과 사전 `+0x600`을 침범하지 않는다.
+전역 로더나 DG 초기화 이전 경로를 바꾸지 않도록 opcode의 call만 수정한다.
+
+`python3 tools/training_load_verify.py work/build/training-cached-location`은 설치된
+명령과 원래 큐를 실행해 map 선택·파일 위치·읽기 길이·상태·재시도·누락 표 fallback을
+비교한다. CD/BIOS는 stub이며 실제 프리즈가 사라졌다는 증거는 아니다.
+
 ## 대사 전환 지연 제거 경로 (2026-09-29)
 
 `build_full.py`는 현재 `--resident-dialogue`에 해당하는 RAM 상주 압축 경로를

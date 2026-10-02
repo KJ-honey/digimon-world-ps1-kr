@@ -158,7 +158,7 @@ def prepare_bank(data, parsed, edits, codec):
     return bytes(changed), records, entries
 
 
-def compile_bank(exe, bank_offset, output, catalog_bank_offset=None, resident_dictionary=None):
+def compile_bank(exe, bank_offset, output, catalog_bank_offset=None, resident_dictionary=None, packed_catalog=False):
     if exe[HOOK:HOOK+8] != HOOK_BEFORE:
         raise ValueError('Text consumer hook revision mismatch')
     output.mkdir(parents=True)
@@ -179,7 +179,8 @@ def compile_bank(exe, bank_offset, output, catalog_bank_offset=None, resident_di
         from catalog_insert import HELPER_OFFSET
         if len(code)>HELPER_OFFSET:
             raise ValueError('DG/catalog helper overlap')
-        suffix=(f'.equ CATALOG_BANK_HI, {catalog_bank_offset>>16}\n'
+        suffix=(f'.equ PACKED_CATALOG, {int(packed_catalog)}\n'
+                f'.equ CATALOG_BANK_HI, {catalog_bank_offset>>16}\n'
                 f'.equ CATALOG_BANK_LO, {catalog_bank_offset&65535}\n'
                 f'.org {HELPER_OFFSET}\n'+(ROOT/'tools/catalog_bank.s').read_text())
         combined=assemble(source()+suffix,output,'bank-catalog')
@@ -279,7 +280,9 @@ def image_plan(disc, table, writes, dg):
     return plan, dict(table['SCN/DG.SCN'],lba=start,size=len(dg)), updates
 
 
-def build(edits_path, output, expand_font=False, name_entry=False, catalog_edits=None, resident_dialogue=False):
+def build(edits_path, output, expand_font=False, name_entry=False, catalog_edits=None, resident_dialogue=False, original_dg_extent=False):
+    if original_dg_extent and not resident_dialogue:
+        raise ValueError('--original-dg-extent requires --resident-dialogue')
     if name_entry and not expand_font: raise ValueError("--name-entry requires --expand-font")
     if catalog_edits and not expand_font: raise ValueError('--catalog-edits requires --expand-font')
     if output.exists() or not output.resolve().is_relative_to((ROOT/'work').resolve()):
@@ -347,17 +350,33 @@ def build(edits_path, output, expand_font=False, name_entry=False, catalog_edits
             from dg_resident import prepare as prepare_resident
             changed,scratch_initial,resident_dictionary,resident_report = prepare_resident(data,parsed,entries)
             records = []
-        bank_offset = len(data)+SHIFT
+        shift = 0 if original_dg_extent else SHIFT
+        bank_offset = len(data)+shift
         catalog_offset=bank_offset+len(records)*BLOCK
+        packed = b''
+        if original_dg_extent:
+            from dg_disk_layout import pack_catalog, compose, CATALOG_OFFSET
+            catalog_offset=CATALOG_OFFSET
+            packed,descriptors=pack_catalog(catalog_records,descriptors,catalog_report,
+                parsed['scripts'][1]['base']-CATALOG_OFFSET)
         has_catalog=bool(catalog_report and catalog_report['changed'])
-        code,hook = compile_bank(exe,bank_offset,output/'bank',catalog_offset if has_catalog else None, resident_dictionary)
-        header = bytearray(data[:0x800])
-        bounds = [s['base'] for s in parsed['scripts']] + [len(data)]
-        struct.pack_into('<226I',header,0,*(b+SHIFT for b in bounds))
-        expanded_dg = (bytes(header)+code.ljust(BLOCK,b'\0')+scratch_initial+descriptors+
-                       changed[0x800:]+b''.join(records+catalog_records))
-        if expanded_dg[bank_offset:]!=b''.join(records+catalog_records):
-            raise ValueError('Bank layout mismatch')
+        code,hook = compile_bank(exe,bank_offset,output/'bank',catalog_offset if has_catalog else None,
+                                 resident_dictionary, packed_catalog=original_dg_extent)
+        disk_layout=None
+        training_load=None
+        if original_dg_extent:
+            from training_load import install as install_training_load
+            code,training_hook,training_load=install_training_load(exe,code,CODE_RAM,table,output/'bank')
+            writes.append(training_hook)
+            expanded_dg,disk_layout=compose(data,changed,parsed,code,scratch_initial,descriptors,packed)
+        else:
+            header = bytearray(data[:0x800])
+            bounds = [s['base'] for s in parsed['scripts']] + [len(data)]
+            struct.pack_into('<226I',header,0,*(b+SHIFT for b in bounds))
+            expanded_dg = (bytes(header)+code.ljust(BLOCK,b'\0')+scratch_initial+descriptors+
+                           changed[0x800:]+b''.join(records+catalog_records))
+            if expanded_dg[bank_offset:]!=b''.join(records+catalog_records):
+                raise ValueError('Bank layout mismatch')
         for e in entries:
             if e['script']==0:
                 at = e['source_payload']-0x800
@@ -371,8 +390,16 @@ def build(edits_path, output, expand_font=False, name_entry=False, catalog_edits
         if not expand_font:
             writes.append({'id':'alignment-repair','file':'SLPS_017.97','file_offset':OFFSET,
                            'before':BEFORE.hex(),'after':AFTER.hex()})
-        plan,new_extent,metadata = image_plan(disc,table,writes,expanded_dg)
-        target_count = new_extent['lba']+len(expanded_dg)//BLOCK
+        if original_dg_extent:
+            writes.append({'id':'resident-dg-original-extent','file':'SCN/DG.SCN','file_offset':0,
+                           'before':data.hex(),'after':expanded_dg.hex()})
+            plan=sector_plan(disc,table,writes)
+            new_extent=dict(table['SCN/DG.SCN'])
+            metadata=[]
+            target_count=len(disc.raw)//2352
+        else:
+            plan,new_extent,metadata = image_plan(disc,table,writes,expanded_dg)
+            target_count = new_extent['lba']+len(expanded_dg)//BLOCK
         image = output/'dg-expanded.iso'
         with image.open('xb') as f:
             for lba in range(target_count):
@@ -413,9 +440,10 @@ def build(edits_path, output, expand_font=False, name_entry=False, catalog_edits
         report = {'format':1,'status':'development-only','release_eligible':False,
                   'source_sha256':SOURCES['kor'][1],'output_sha256':result_hash,
                   'source_dg_sha256':sha(data),'dg_sha256':sha(expanded_dg),
-                  'resident_dialogue':resident_report,
+                  'resident_dialogue':resident_report,'disk_layout':disk_layout,
+                  'training_load':training_load,
                   'bank_offset':bank_offset,'code_ram':CODE_RAM,'scratch_ram':SCRATCH_RAM,
-                  'script_file_offset_shift':SHIFT,'script_ram_offsets_unchanged':True,
+                  'script_file_offset_shift':shift,'script_ram_offsets_unchanged':True,
                   'entries':entries,'writes':writes,'new_dg_extent':new_extent,
                   'catalog':dict(catalog_report,bank_file_offset=catalog_offset) if catalog_report else None,
                   'name_entry':name_report if name_entry else None,
@@ -456,5 +484,6 @@ if __name__=='__main__':
     p.add_argument('--name-entry',action='store_true')
     p.add_argument('--catalog-edits',type=Path,help='Non-DG source-bound edit manifest')
     p.add_argument('--resident-dialogue',action='store_true',help='Lossless in-script pools; no per-dialogue CD reads')
+    p.add_argument('--original-dg-extent',action='store_true',help='Keep original DG disc location; requires resident dialogue')
     a=p.parse_args()
-    print(json.dumps(build(a.edits,a.output,a.expand_font,a.name_entry,a.catalog_edits,a.resident_dialogue),ensure_ascii=False,indent=2))
+    print(json.dumps(build(a.edits,a.output,a.expand_font,a.name_entry,a.catalog_edits,a.resident_dialogue,a.original_dg_extent),ensure_ascii=False,indent=2))

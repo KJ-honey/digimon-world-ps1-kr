@@ -65,7 +65,7 @@ def build(output):
         image = stage / 'image'
         result = build_image(dialogue / 'edits.json', image,
                              expand_font=True, name_entry=True,
-                             catalog_edits=catalog, resident_dialogue=True)
+                             catalog_edits=catalog, resident_dialogue=True, original_dg_extent=True)
 
         previous = stage / 'previous'
         if output.exists():

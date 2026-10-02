@@ -63,6 +63,7 @@ def verify(build_dir):
         files = disc.files()
         read = lambda name: disc.read(files[name]['lba'],files[name]['size'])
         dg,exe = read('SCN/DG.SCN'),read('SLPS_017.97')
+        mirror=read('SCN/MAPHEAD.SCN')
         # Keep all current name/pointer tables, including repacked techniques.
         # Only restore the original consumer prologue in the oracle.
         oracle_exe=bytearray(exe)
@@ -117,9 +118,13 @@ def verify(build_dir):
             c.mem_write(0x1640b8,bytes(0x100))
             if resident:
                 shift=report['script_file_offset_shift']
-                c.mem_write(base&0x1fffff,dg[script['base']+shift:script['limit']+shift])
+                loaded=mirror if entry['script']==0 else dg[script['base']+shift:script['limit']+shift]
+                c.mem_write(base&0x1fffff,loaded)
             descriptor=dg[entry['source_payload']+report['script_file_offset_shift']:
                           entry['source_payload']+report['script_file_offset_shift']+4]
+            if resident:
+                pos=entry['source_payload']-script['base']
+                descriptor=loaded[pos:pos+4]
             continuation=pointer+entry['old_bytes']
             c.mem_write(pointer&0x1fffff,descriptor)
             c.mem_write(continuation&0x1fffff,bytes((next_opcode,0)))

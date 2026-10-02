@@ -14,6 +14,11 @@
     sw $a2,24($sp)
     lhu $a2,2($a0)
     nop
+    .if PACKED_CATALOG
+    andi $t0,$a2,2047
+    sw $t0,16($sp)
+    srl $a2,$a2,11
+    .endif
     sll $a2,$a2,11
     lui $t0,CATALOG_BANK_HI
     ori $t0,$t0,CATALOG_BANK_LO
@@ -25,6 +30,11 @@
     jal 0x800ec21c
     nop
     addiu $a0,$sp,32
+    .if PACKED_CATALOG
+    lw $t0,16($sp)
+    nop
+    addu $a0,$a0,$t0
+    .endif
     lw $a1,20($sp)
     lw $a2,24($sp)
     jal 0x800f34e4
