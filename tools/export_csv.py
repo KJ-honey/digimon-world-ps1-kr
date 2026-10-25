@@ -10,7 +10,7 @@ from pathlib import Path
 
 from survey import ROOT
 
-COLUMNS = ['id', 'category', 'script', 'file', 'logical_offset', 'table_index',
+COLUMNS = ['id', 'category', 'boundary', 'script', 'file', 'logical_offset', 'table_index',
            'source_jpn', 'existing_kor', 'review_kor', 'status', 'revision',
            'updated_at', 'note', 'context']
 
@@ -23,7 +23,7 @@ def rows_for(directory):
         offset = row.get('logical_offset')
         yield {
             'id': row['id'], 'category': row.get('category', 'dialogue'),
-            'script': row.get('script'), 'file': row['file'],
+            'boundary': row.get('boundary', ''), 'script': row.get('script'), 'file': row['file'],
             'logical_offset': f'0x{offset:X}' if offset is not None else '',
             'table_index': row.get('table_index', ''),
             'source_jpn': row['source'], 'existing_kor': row['existing'],
@@ -49,10 +49,14 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     dialogue = list(rows_for(args.directory))
     catalog = list(rows_for(args.directory / 'catalog'))
+    # Unverified candidates stay in their own file as well as in all.csv.
+    candidates = (list(rows_for(args.directory / 'candidates'))
+                  if (args.directory / 'candidates' / 'baseline.json').exists() else [])
     write(args.output / 'dialogue.csv', dialogue)
     write(args.output / 'catalog.csv', catalog)
-    write(args.output / 'all.csv', dialogue + catalog)
-    print(f'dialogue {len(dialogue)}, catalog {len(catalog)} -> {args.output}')
+    write(args.output / 'candidates.csv', candidates)
+    write(args.output / 'all.csv', dialogue + catalog + candidates)
+    print(f'dialogue {len(dialogue)}, catalog {len(catalog)}, candidates {len(candidates)} -> {args.output}')
 
 
 if __name__ == '__main__':

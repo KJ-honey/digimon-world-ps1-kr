@@ -223,8 +223,9 @@ class ReviewWorkspace:
     def __init__(self, directory):
         self.directory = directory
         self.workspaces = [Workspace(directory)]
-        if (directory / 'catalog' / 'baseline.json').exists():
-            self.workspaces.append(Workspace(directory / 'catalog'))
+        for family in ('catalog', 'candidates'):
+            if (directory / family / 'baseline.json').exists():
+                self.workspaces.append(Workspace(directory / family))
         self.owners = {}
         entries = []
         for workspace in self.workspaces:
@@ -311,7 +312,8 @@ def handler_for(workspace):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['prepare', 'prepare-catalog', 'serve', 'import', 'report'])
+    parser.add_argument('command', choices=['prepare', 'prepare-catalog', 'prepare-candidates',
+                                            'serve', 'import', 'report'])
     parser.add_argument('--directory', type=Path, default=WORK)
     parser.add_argument('--port', type=int, default=8770)
     parser.add_argument('--open', action='store_true')
@@ -319,11 +321,15 @@ def main():
     args = parser.parse_args()
     if not args.directory.resolve().is_relative_to((ROOT / 'work').resolve()):
         parser.error('Workspace must stay under work/')
-    if args.command in {'prepare', 'prepare-catalog'}:
+    if args.command in {'prepare', 'prepare-catalog', 'prepare-candidates'}:
         if args.command == 'prepare':
             prepare(args.directory)
-        from translation_catalog import prepare as prepare_catalog
-        prepare_catalog(args.directory / 'catalog')
+        if args.command != 'prepare-candidates':
+            from translation_catalog import prepare as prepare_catalog
+            prepare_catalog(args.directory / 'catalog')
+        if args.command != 'prepare-catalog':
+            from translation_candidates import prepare as prepare_candidates
+            prepare_candidates(args.directory / 'candidates')
         return
     workspace = ReviewWorkspace(args.directory)
     if args.command == 'import':
